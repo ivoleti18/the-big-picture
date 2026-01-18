@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Topic } from '@/lib/types';
+import { generateTopicPrompt, cleanPromptResponse } from '@/lib/prompts';
 
 // Initialize Gemini client
 function getGeminiClient() {
@@ -118,18 +119,224 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(mockTopic);
     }
 
-    // Initialize Gemini client (will be used in Task 3.1)
+    // Initialize Gemini client and generate topic
     try {
       const genAI = getGeminiClient();
-      // For now, return mock response
-      // Actual Gemini integration will be in Task 3.1
-      const mockTopic = getMockTopic(sanitizedQuery);
-      return NextResponse.json(mockTopic);
+      
+      // Use Gemini 1.5 Flash model with JSON mode and Google Search grounding
+      const model = genAI.getGenerativeModel({ 
+        model: 'gemini-1.5-flash',
+        // Enable structured JSON output
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.7,
+          topP: 0.9,
+          topK: 40,
+        },
+        // Enable Google Search grounding for real article discovery
+        tools: [
+          {
+            googleSearchRetrieval: {},
+          },
+        ],
+      });
+
+      // Generate prompt with hybrid approach instructions
+      const prompt = generateTopicPrompt(sanitizedQuery);
+
+      // Call Gemini API with timeout
+      const startTime = Date.now();
+      const timeoutMs = 60000; // 60 second timeout
+      
+      const result = await Promise.race([
+        model.generateContent(prompt),
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('API request timeout')), timeoutMs)
+        ),
+      ]);
+      
+      const response = result.response;
+      const text = response.text();
+      const elapsedTime = Date.now() - startTime;
+      
+      console.log(`Gemini API call completed in ${elapsedTime}ms`);
+
+      // Clean and parse JSON response
+      const cleanedText = cleanPromptResponse(text);
+      let topicData: Topic;
+
+      try {
+        topicData = JSON.parse(cleanedText);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        console.error('Response text:', cleanedText.substring(0, 500));
+        // Fallback to mock if JSON parsing fails
+        console.warn('Failed to parse Gemini response. Using mock fallback.');
+        const mockTopic = getMockTopic(sanitizedQuery);
+        return NextResponse.json(mockTopic);
+      }
+
+      // Validate response structure (comprehensive validation)
+      if (!topicData.id || !topicData.name || !topicData.subTopics || !Array.isArray(topicData.subTopics)) {
+        console.error('Invalid topic structure:', topicData);
+        // Fallback to mock if structure invalid
+        console.warn('Invalid Gemini response structure. Using mock fallback.');
+        const mockTopic = getMockTopic(sanitizedQuery);
+        return NextResponse.json(mockTopic);
+      }
+
+      // Validate and normalize leanings (ensure they're valid enum values)
+      const validLeanings: Array<Topic['subTopics'][0]['articles'][0]['leaning']> = 
+        ['left', 'lean-left', 'center', 'lean-right', 'right', 'neutral'];
+      
+      // Count real vs generated articles for logging
+      let realArticleCount = 0;
+      let generatedArticleCount = 0;
+      
+      topicData.subTopics.forEach((subTopic, subTopicIndex) => {
+        // Validate sub-topic structure
+        if (!subTopic.id || !subTopic.name || !subTopic.articles || !Array.isArray(subTopic.articles)) {
+          console.warn(`Invalid sub-topic structure at index ${subTopicIndex}`);
+          return;
+        }
+        
+        subTopic.articles.forEach((article, articleIndex) => {
+          // Validate article structure
+          if (!article.id || !article.title || !article.source || !article.leaning || !article.summary) {
+            console.warn(`Invalid article structure at sub-topic ${subTopicIndex}, article ${articleIndex}`);
+            return;
+          }
+          
+          // Validate leaning
+          if (!validLeanings.includes(article.leaning)) {
+            console.warn(`Invalid leaning "${article.leaning}" found. Defaulting to "center".`);
+            article.leaning = 'center';
+          }
+          
+          // Detect if article is real (has URL) or generated
+          if (article.url && article.url.trim().length > 0) {
+            // Validate URL format
+            try {
+              new URL(article.url);
+              realArticleCount++;
+              console.log(`Real article detected: ${article.title} from ${article.source}`);
+            } catch {
+              // Invalid URL, treat as generated
+              console.warn(`Invalid URL format for article: ${article.url}`);
+              delete article.url;
+              generatedArticleCount++;
+            }
+          } else {
+            generatedArticleCount++;
+          }
+          
+          // Ensure summary has minimum items
+          if (!Array.isArray(article.summary) || article.summary.length < 4) {
+            console.warn(`Article summary has insufficient items (${article.summary?.length || 0}), expected at least 4`);
+          }
+          
+          // Ensure keyFacts is an array (optional field)
+          if (article.keyFacts && !Array.isArray(article.keyFacts)) {
+            article.keyFacts = [];
+          }
+        });
+      });
+      
+      console.log(`Article breakdown: ${realArticleCount} real articles, ${generatedArticleCount} generated articles`);
+      
+      // Normalize IDs to kebab-case if needed
+      const toKebabCase = (str: string): string => {
+        return str
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      };
+      
+      if (topicData.id !== toKebabCase(topicData.name)) {
+        topicData.id = toKebabCase(topicData.name) || 'topic';
+      }
+      
+      topicData.subTopics.forEach((subTopic, subTopicIndex) => {
+        if (subTopic.id !== toKebabCase(subTopic.name)) {
+          subTopic.id = toKebabCase(subTopic.name) || `subtopic-${subTopicIndex + 1}`;
+        }
+        
+        subTopic.articles.forEach((article, articleIndex) => {
+          if (article.id !== toKebabCase(article.title)) {
+            article.id = toKebabCase(article.title) || `${subTopic.id}-article-${articleIndex + 1}`;
+          }
+        });
+      });
+
+      return NextResponse.json(topicData);
     } catch (error) {
-      // If client initialization fails, return mock
-      console.error('Gemini client initialization error:', error);
+      // If Gemini API fails, fall back to mock response
+      console.error('Gemini API error:', error);
+      
+      // Handle specific error types
+      if (error instanceof Error) {
+        // Rate limiting errors
+        if (error.message.includes('quota') || 
+            error.message.includes('429') || 
+            error.message.includes('rate limit') ||
+            error.message.includes('RESOURCE_EXHAUSTED')) {
+          console.warn('Rate limit reached. Using mock fallback.');
+          const mockTopic = getMockTopic(sanitizedQuery);
+          return NextResponse.json(mockTopic, {
+            headers: {
+              'X-Rate-Limited': 'true',
+              'Retry-After': '60',
+            },
+          });
+        }
+        
+        // Timeout errors
+        if (error.message.includes('timeout') || error.message.includes('API request timeout')) {
+          console.warn('API request timeout. Using mock fallback.');
+          const mockTopic = getMockTopic(sanitizedQuery);
+          return NextResponse.json(mockTopic, {
+            headers: {
+              'X-Timeout': 'true',
+            },
+          });
+        }
+        
+        // Authentication errors
+        if (error.message.includes('API_KEY') || 
+            error.message.includes('authentication') ||
+            error.message.includes('UNAUTHENTICATED')) {
+          console.error('API authentication error:', error.message);
+          return NextResponse.json(
+            { 
+              error: 'API authentication failed. Please check your GEMINI_API_KEY configuration.',
+              fallback: true,
+            },
+            { status: 401 }
+          );
+        }
+        
+        // Invalid request errors
+        if (error.message.includes('INVALID_ARGUMENT') || 
+            error.message.includes('invalid')) {
+          console.error('Invalid API request:', error.message);
+          // Still try to provide mock fallback for user experience
+          const mockTopic = getMockTopic(sanitizedQuery);
+          return NextResponse.json(mockTopic, {
+            headers: {
+              'X-Fallback-Reason': 'invalid-request',
+            },
+          });
+        }
+      }
+
+      // For other errors, fall back to mock
+      console.warn('Gemini API unavailable. Using mock fallback. Error:', error);
       const mockTopic = getMockTopic(sanitizedQuery);
-      return NextResponse.json(mockTopic);
+      return NextResponse.json(mockTopic, {
+        headers: {
+          'X-Fallback-Reason': 'api-error',
+        },
+      });
     }
   } catch (error) {
     console.error('API route error:', error);
