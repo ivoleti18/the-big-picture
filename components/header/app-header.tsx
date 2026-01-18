@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { TopicSelector } from './topic-selector';
 import { TopicSearch } from './topic-search';
 import type { Topic } from '@/lib/types';
+import { demoTopics } from '@/lib/demo-data';
 import { cn } from '@/lib/utils';
 
 interface AppHeaderProps {
@@ -51,6 +52,7 @@ export function AppHeader({
             onSearchStart={onSearchStart}
             onSearchComplete={onSearchComplete}
             className="flex-1 min-w-0"
+            resetKey={demoTopics.some(t => t.id === selectedTopic.id) ? selectedTopic.id : undefined}
           />
           {/* Keep TopicSelector for quick access to demo topics */}
           <div className="hidden lg:block">

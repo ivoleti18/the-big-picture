@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search, Loader2, X, AlertCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,8 @@ interface TopicSearchProps {
     onSearchStart?: () => void;
     onSearchComplete?: () => void;
     className?: string;
+    /** Key that triggers a reset when changed (useful when dropdown topic is selected) */
+    resetKey?: string;
 }
 
 interface SearchState {
@@ -26,6 +28,7 @@ export function TopicSearch({
     onSearchStart,
     onSearchComplete,
     className,
+    resetKey,
 }: TopicSearchProps) {
     const [searchState, setSearchState] = useState<SearchState>({
         query: '',
@@ -33,6 +36,20 @@ export function TopicSearch({
         error: null,
         lastSearchedQuery: null,
     });
+    const prevResetKeyRef = useRef<string | undefined>(resetKey);
+
+    // Reset search when resetKey changes (e.g., when dropdown topic is selected)
+    useEffect(() => {
+        if (resetKey !== undefined && resetKey !== prevResetKeyRef.current) {
+            setSearchState({
+                query: '',
+                isLoading: false,
+                error: null,
+                lastSearchedQuery: null,
+            });
+            prevResetKeyRef.current = resetKey;
+        }
+    }, [resetKey]);
 
     // Debounce effect - 500ms delay
     useEffect(() => {
