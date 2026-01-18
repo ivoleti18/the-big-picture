@@ -40,7 +40,7 @@ export function AppHeader({
               The Big Picture
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Map complexity. Foster understanding.
+              Where Complexity becomes Clarity
             </p>
           </div>
         </div>
