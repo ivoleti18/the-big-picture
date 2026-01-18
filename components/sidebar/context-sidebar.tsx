@@ -66,18 +66,18 @@ export function ContextSidebar({ article, onClose }: ContextSidebarProps) {
           </Button>
         </div>
 
-        <h2 className="text-lg font-bold text-foreground leading-tight mb-2">
+        <h2 className="text-lg font-bold text-foreground leading-tight mb-2 break-words">
           {article.title}
         </h2>
 
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Source:</span>
-          <span className="font-medium text-foreground">{article.source}</span>
+        <div className="flex items-center gap-2 text-sm min-w-0">
+          <span className="text-muted-foreground shrink-0">Source:</span>
+          <span className="font-medium text-foreground break-words min-w-0">{article.source}</span>
         </div>
 
-        <div className="flex items-center gap-2 text-sm mt-1">
-          <span className="text-muted-foreground">Topic:</span>
-          <span className="font-medium text-foreground">{article.subTopicName}</span>
+        <div className="flex items-center gap-2 text-sm mt-1 min-w-0">
+          <span className="text-muted-foreground shrink-0">Topic:</span>
+          <span className="font-medium text-foreground break-words min-w-0">{article.subTopicName}</span>
         </div>
       </div>
 
@@ -92,9 +92,9 @@ export function ContextSidebar({ article, onClose }: ContextSidebarProps) {
             </h3>
             <ul className="space-y-3">
               {article.summary.map((point, index) => (
-                <li key={index} className="flex gap-3 text-sm">
+                <li key={index} className="flex gap-3 text-sm min-w-0">
                   <span className="text-muted-foreground shrink-0 mt-1">•</span>
-                  <span className="text-foreground/90 leading-relaxed">{point}</span>
+                  <span className="text-foreground/90 leading-relaxed break-words">{point}</span>
                 </li>
               ))}
             </ul>
