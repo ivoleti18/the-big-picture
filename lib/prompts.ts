@@ -153,6 +153,109 @@ export function cleanPromptResponse(response: string): string {
 }
 
 /**
+ * Generates a comprehensive prompt for Gemini to analyze article comparisons
+ */
+export function generateComparisonPrompt(articles: Array<{
+  title: string;
+  source: string;
+  leaning: string;
+  summary: string[];
+  keyFacts?: string[];
+  subTopicName?: string;
+}>): string {
+  const articlesText = articles.map((article, index) => {
+    const leaningLabel = article.leaning.replace('-', ' ').toUpperCase();
+    return `
+ARTICLE ${index + 1}:
+Title: "${article.title}"
+Source: ${article.source} (${leaningLabel} leaning)
+Sub-topic: ${article.subTopicName || 'N/A'}
+Key Facts: ${(article.keyFacts || []).join('; ')}
+Summary:
+${article.summary.map((point, i) => `  ${i + 1}. ${point}`).join('\n')}
+`;
+  }).join('\n---\n');
+
+  return `You are an expert analyst specializing in finding common ground and nuanced differences between articles with different political perspectives. Your goal is to help readers discover the "Aha!" moment - shared facts and overlapping data points even when perspectives differ.
+
+ARTICLES TO COMPARE:
+${articlesText}
+
+TASK: Perform a deep, intelligent comparison analysis and identify:
+
+1. SHARED FACTS & DATA POINTS (The "Aha!" Moment):
+   - Extract specific facts, statistics, numbers, percentages, dates, or data points that appear in MULTIPLE articles
+   - Look for the same or similar numerical data (e.g., "$25B budget", "10% increase", "150,000 people")
+   - Identify statements of fact (not opinion) that both sources acknowledge
+   - Even if wording differs slightly, if the core fact is the same, include it
+   - Format: Clear, concise statements of shared facts (e.g., "Both sources cite the $25B annual budget")
+   - Maximum 5 shared facts
+
+2. COMMON THEMES:
+   - Identify conceptual areas that both perspectives address, even with different conclusions
+   - Look for underlying concerns, values, or considerations both articles recognize
+   - Examples: "Both perspectives acknowledge environmental concerns", "Both address economic implications"
+   - Maximum 4 common themes
+
+3. KEY DIFFERENCES:
+   - Identify where the perspectives genuinely diverge in emphasis, framing, or conclusions
+   - Note different priorities, interpretations of data, or solution approaches
+   - Avoid simple left/right labeling - focus on substantive differences
+   - Maximum 3 differences
+
+4. DATA POINTS:
+   - Extract all specific numerical data mentioned across articles
+   - Include: percentages, dollar amounts, counts, dates, rates, etc.
+   - Format as an array of strings (e.g., ["$25B", "10%", "150,000"])
+   - Include only data that appears in 2+ articles
+
+ANALYSIS REQUIREMENTS:
+- Be precise: Only cite facts that are actually present in the articles
+- Be insightful: Go beyond surface-level similarities to find meaningful overlaps
+- Be nuanced: Recognize that agreement on facts can coexist with different interpretations
+- Focus on the "Aha!" moment: Highlight surprising commonalities between seemingly opposing perspectives
+- Use specific data: Include actual numbers, statistics, or concrete facts when available
+- Avoid generic statements: Make each insight specific to these particular articles
+
+OUTPUT FORMAT: Return ONLY valid JSON matching this exact structure:
+
+{
+  "sharedFacts": [
+    "Specific shared fact with data point (e.g., 'Both sources cite the $25B annual budget')",
+    "Another shared fact or data point",
+    "..."
+  ],
+  "commonThemes": [
+    "Both perspectives address [specific theme/concept]",
+    "Another common theme both recognize",
+    "..."
+  ],
+  "differences": [
+    "Specific difference in emphasis or interpretation",
+    "Another substantive difference",
+    "..."
+  ],
+  "dataPoints": [
+    "$25B",
+    "10%",
+    "150,000",
+    "..."
+  ]
+}
+
+IMPORTANT:
+- Return ONLY the JSON object, no markdown, no code blocks, no explanations
+- Ensure all arrays contain only strings (no nested objects)
+- All strings should be clear, complete sentences or data points
+- Maximum 5 sharedFacts, 4 commonThemes, 3 differences, 10 dataPoints
+- sharedFacts should be the most compelling - these are the "Aha!" moments
+- Be specific: Include actual numbers or data when mentioned
+- If no shared facts/data exist, return empty arrays
+
+Perform the analysis now:`;
+}
+
+/**
  * JSON Schema for Topic response (for reference/validation)
  */
 export const TOPIC_JSON_SCHEMA = {
