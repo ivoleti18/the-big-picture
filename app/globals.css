@@ -99,6 +99,18 @@
 /* React Flow custom styles */
 .react-flow__node {
   cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.3s ease,
+              box-shadow 0.3s ease;
+}
+
+.react-flow__node:hover {
+  z-index: 100;
+}
+
+/* Smooth node movement transitions */
+.react-flow__nodes {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .react-flow__controls {

@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 export const CentralNode = memo(function CentralNode({ data }: NodeProps) {
   return (
     <div className="flex items-center justify-center">
-      <div className="relative flex items-center justify-center w-40 h-40 rounded-full bg-primary/20 border-2 border-primary shadow-lg shadow-primary/20">
+      <div className="relative flex items-center justify-center w-40 h-40 rounded-full bg-primary/20 border-2 border-primary shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 hover:scale-105">
         <div className="absolute inset-2 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 animate-pulse" />
         <div className="relative z-10 text-center px-4">
           <span className="text-lg font-bold text-foreground leading-tight">{data.label as string}</span>
@@ -32,7 +32,7 @@ export const SubTopicNode = memo(function SubTopicNode({ data }: NodeProps) {
       <Handle type="target" position={Position.Top} className="!bg-muted-foreground !w-2 !h-2" isConnectable={false} />
       <Handle type="target" position={Position.Bottom} className="!bg-muted-foreground !w-2 !h-2" isConnectable={false} />
       <Handle type="target" position={Position.Right} className="!bg-muted-foreground !w-2 !h-2" isConnectable={false} />
-      <div className="w-28 h-28 rounded-full bg-secondary border-2 border-border flex items-center justify-center shadow-md hover:shadow-lg hover:border-primary/50 transition-all duration-200">
+      <div className="w-28 h-28 rounded-full bg-secondary border-2 border-border flex items-center justify-center shadow-md hover:shadow-xl hover:border-primary/60 hover:scale-110 cursor-grab active:cursor-grabbing transition-all duration-300">
         <span className="text-sm font-semibold text-foreground text-center px-3 leading-tight">
           {data.label as string}
         </span>
@@ -75,12 +75,12 @@ export const ArticleNode = memo(function ArticleNode({ data }: NodeProps) {
       <Handle type="target" position={Position.Right} className="!bg-muted-foreground !w-2 !h-2" isConnectable={false} />
       <div 
         className={cn(
-          "w-24 min-h-24 rounded-xl border-2 flex flex-col items-center justify-center p-2 shadow-md transition-all duration-200",
+          "w-24 min-h-24 rounded-xl border-2 flex flex-col items-center justify-center p-2 shadow-md transition-all duration-300",
           colors.bg,
           colors.border,
           nodeData.selected && "ring-2 ring-primary ring-offset-2 ring-offset-background scale-110",
           nodeData.isCompareCandidate && "ring-2 ring-yellow-400 ring-offset-1 ring-offset-background",
-          "hover:scale-105 hover:shadow-lg cursor-pointer"
+          "hover:scale-110 hover:shadow-xl hover:border-opacity-80 cursor-grab active:cursor-grabbing"
         )}
       >
         <span className={cn("text-xs font-medium text-center leading-tight mb-1", colors.text)}>
