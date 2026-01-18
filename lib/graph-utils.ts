@@ -39,7 +39,6 @@ export function generateGraphFromTopic(topic: Topic): GraphData {
       type: 'subTopic',
       position: { x: subX, y: subY },
       data: { label: subTopic.name },
-      draggable: false,
     };
     nodes.push(subTopicNode);
 
@@ -78,7 +77,6 @@ export function generateGraphFromTopic(topic: Topic): GraphData {
           selected: false,
           isCompareCandidate: false,
         },
-        draggable: false,
       };
       nodes.push(articleNode);
 
