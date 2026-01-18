@@ -4,7 +4,7 @@
 
 TheBigPicture is an interactive perspective mapping tool that helps users navigate polarized topics through structured, visual knowledge graphs. Instead of being overwhelmed by algorithmic feeds, users can see where viewpoints overlap, diverge, and align on core facts.
 
-[**Demo Video**](#) | [**Live Site**](#) | [**Project Pitch**](#)
+[**Demo Video**](#) | [**Live Site**](https://v0-frontend-code-generation-lyart.vercel.app/)
 
 ---
 
