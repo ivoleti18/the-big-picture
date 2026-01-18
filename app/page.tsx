@@ -65,6 +65,17 @@ export default function HomePage() {
     setCompareArticles([]);
   }, []);
 
+  const handleSearchStart = useCallback(() => {
+    setIsLoading(true);
+    // Clear current selection when starting new search
+    setSelectedArticle(null);
+    setCompareArticles([]);
+  }, []);
+
+  const handleSearchComplete = useCallback(() => {
+    setIsLoading(false);
+  }, []);
+
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
@@ -74,6 +85,8 @@ export default function HomePage() {
         compareMode={compareMode}
         onCompareModeToggle={handleCompareModeToggle}
         compareCount={compareArticles.length}
+        onSearchStart={handleSearchStart}
+        onSearchComplete={handleSearchComplete}
       />
 
       {/* Main Content */}

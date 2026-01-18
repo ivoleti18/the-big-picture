@@ -3,6 +3,7 @@
 import { Compass, GitCompare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TopicSelector } from './topic-selector';
+import { TopicSearch } from './topic-search';
 import type { Topic } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -12,6 +13,8 @@ interface AppHeaderProps {
   compareMode: boolean;
   onCompareModeToggle: () => void;
   compareCount: number;
+  onSearchStart?: () => void;
+  onSearchComplete?: () => void;
 }
 
 export function AppHeader({
@@ -20,6 +23,8 @@ export function AppHeader({
   compareMode,
   onCompareModeToggle,
   compareCount,
+  onSearchStart,
+  onSearchComplete,
 }: AppHeaderProps) {
   return (
     <header className="h-16 border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
@@ -39,11 +44,22 @@ export function AppHeader({
           </div>
         </div>
 
-        {/* Center: Topic Selector */}
-        <TopicSelector
-          selectedTopic={selectedTopic}
-          onTopicChange={onTopicChange}
-        />
+        {/* Center: Topic Search */}
+        <div className="flex items-center gap-3 flex-1 justify-center max-w-2xl">
+          <TopicSearch
+            onTopicSelect={onTopicChange}
+            onSearchStart={onSearchStart}
+            onSearchComplete={onSearchComplete}
+            className="flex-1 min-w-0"
+          />
+          {/* Keep TopicSelector for quick access to demo topics */}
+          <div className="hidden lg:block">
+            <TopicSelector
+              selectedTopic={selectedTopic}
+              onTopicChange={onTopicChange}
+            />
+          </div>
+        </div>
 
         {/* Right: Compare Mode Toggle */}
         <Button
