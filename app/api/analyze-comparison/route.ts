@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { generateComparisonPrompt, cleanPromptResponse } from '@/lib/prompts';
+import { generateComparisonPrompt, cleanPromptResponse, parseJSONWithRepair } from '@/lib/prompts';
 import type { SelectedArticle } from '@/lib/types';
 
 interface ComparisonAnalysisResponse {
@@ -9,6 +9,31 @@ interface ComparisonAnalysisResponse {
   commonThemes: string[];
   dataPoints: string[];
 }
+
+// JSON Schema for structured output (ensures complete JSON responses)
+// This schema enforces that Gemini completes the entire JSON structure
+const comparisonSchema = {
+  type: 'object',
+  properties: {
+    sharedFacts: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+    commonThemes: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+    differences: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+    dataPoints: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+  },
+  required: ['sharedFacts', 'commonThemes', 'differences', 'dataPoints'],
+};
 
 // Initialize Gemini client
 function getGeminiClient() {
@@ -109,7 +134,8 @@ export async function POST(request: NextRequest) {
     try {
       const genAI = getGeminiClient();
 
-      // Use Gemini 2.5 Flash model
+      // Use Gemini 2.5 Flash model with structured output (Response Schema)
+      // Note: Response Schema ensures complete JSON responses and validates structure
       const model = genAI.getGenerativeModel({
         model: 'gemini-2.5-flash',
         generationConfig: {
@@ -117,6 +143,8 @@ export async function POST(request: NextRequest) {
           topP: 0.8,
           topK: 40,
           maxOutputTokens: 4096, // Limit output tokens for faster responses (~3K tokens for comparison analysis)
+          responseMimeType: 'application/json', // Enforce JSON output format
+          responseSchema: comparisonSchema as any, // JSON Schema to ensure complete, valid responses (type assertion for SDK compatibility)
         },
       });
 
@@ -146,22 +174,31 @@ export async function POST(request: NextRequest) {
       ]);
 
       const response = result.response;
-      const text = response.text();
       const elapsedTime = Date.now() - startTime;
 
       console.log(`Gemini comparison analysis completed in ${elapsedTime}ms`);
 
-      // Clean and parse JSON response
-      const cleanedText = cleanPromptResponse(text);
+      // With responseSchema, response.text() returns valid JSON directly
+      // Schema ensures complete JSON structure, but we add repair fallback for edge cases
       let analysis: ComparisonAnalysisResponse;
+      const text = response.text(); // Get response text once
 
       try {
-        analysis = JSON.parse(cleanedText);
+        // Try parsing with repair function (handles incomplete JSON)
+        analysis = parseJSONWithRepair(text);
       } catch (parseError) {
-        console.error('JSON parse error:', parseError);
-        console.error('Response text:', cleanedText.substring(0, 500));
+        console.error('JSON parse error (with repair attempts):', parseError);
+        console.error('Response text (first 500 chars):', text.substring(0, 500));
+
+        // Log JSON structure info for debugging
+        const openBraces = (text.match(/\{/g) || []).length;
+        const closeBraces = (text.match(/\}/g) || []).length;
+        const openBrackets = (text.match(/\[/g) || []).length;
+        const closeBrackets = (text.match(/\]/g) || []).length;
+        console.error(`JSON structure: {${openBraces}/${closeBraces}}, [${openBrackets}/${closeBrackets}]`);
+
         // Fallback to heuristic analysis if JSON parsing fails
-        console.warn('Failed to parse Gemini response. Using fallback analysis.');
+        console.warn('Failed to parse Gemini response after repair attempts. Using fallback analysis.');
         const fallbackAnalysis = getFallbackAnalysis(articles as SelectedArticle[]);
         return NextResponse.json(fallbackAnalysis, {
           headers: { 'X-Fallback-Reason': 'parse-error' },

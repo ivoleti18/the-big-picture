@@ -1,23 +1,124 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Topic } from '@/lib/types';
-import { generateTopicPrompt, cleanPromptResponse } from '@/lib/prompts';
+import { generateTopicPrompt, cleanPromptResponse, parseJSONWithRepair } from '@/lib/prompts';
+
+// JSON Schema for structured output (ensures complete JSON responses)
+// This schema enforces that Gemini completes the entire JSON structure
+const topicSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    name: { type: 'string' },
+    description: { type: 'string' },
+    subTopics: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          name: { type: 'string' },
+          description: { type: 'string' },
+          articles: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                title: { type: 'string' },
+                source: { type: 'string' },
+                leaning: {
+                  type: 'string',
+                  enum: ['left', 'lean-left', 'center', 'lean-right', 'right', 'neutral'],
+                },
+                summary: {
+                  type: 'array',
+                  items: { type: 'string' },
+                },
+                keyFacts: {
+                  type: 'array',
+                  items: { type: 'string' },
+                },
+                perspectiveAnalysis: {
+                  type: 'object',
+                  properties: {
+                    languagePatterns: {
+                      type: 'object',
+                      properties: {
+                        framingIndicators: {
+                          type: 'array',
+                          items: { type: 'string' },
+                        },
+                        sentiment: {
+                          type: 'string',
+                          enum: ['positive', 'negative', 'neutral', 'mixed'],
+                        },
+                        examples: {
+                          type: 'array',
+                          items: { type: 'string' },
+                        },
+                      },
+                      required: ['framingIndicators', 'sentiment', 'examples'],
+                    },
+                    sourceClassification: {
+                      type: 'object',
+                      properties: {
+                        publicationBias: { type: 'string' },
+                        editorialStance: { type: 'string' },
+                        reputationFactors: {
+                          type: 'array',
+                          items: { type: 'string' },
+                        },
+                      },
+                      required: ['publicationBias', 'editorialStance'],
+                    },
+                    topicCoverage: {
+                      type: 'object',
+                      properties: {
+                        emphasisPoints: {
+                          type: 'array',
+                          items: { type: 'string' },
+                        },
+                        coverageDistribution: { type: 'string' },
+                        omissions: {
+                          type: 'array',
+                          items: { type: 'string' },
+                        },
+                      },
+                      required: ['emphasisPoints', 'coverageDistribution'],
+                    },
+                    confidenceScore: { type: 'number' },
+                    reasoning: { type: 'string' },
+                  },
+                  required: ['languagePatterns', 'sourceClassification', 'topicCoverage', 'confidenceScore', 'reasoning'],
+                },
+              },
+              required: ['id', 'title', 'source', 'leaning', 'summary'],
+            },
+          },
+        },
+        required: ['id', 'name', 'description', 'articles'],
+      },
+    },
+  },
+  required: ['id', 'name', 'description', 'subTopics'],
+};
 
 // Initialize Gemini client
 function getGeminiClient() {
   const apiKey = process.env.GEMINI_API_KEY;
-  
+
   if (!apiKey || apiKey === 'your_api_key_here') {
     throw new Error('GEMINI_API_KEY is not configured. Please set it in .env.local');
   }
-  
+
   return new GoogleGenerativeAI(apiKey);
 }
 
 // Mock response for testing (matches Topic type)
 function getMockTopic(query: string): Topic {
   const kebabQuery = query.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-  
+
   return {
     id: kebabQuery || 'sample-topic',
     name: query || 'Sample Topic',
@@ -122,17 +223,19 @@ export async function POST(request: NextRequest) {
     // Initialize Gemini client and generate topic
     try {
       const genAI = getGeminiClient();
-      
-      // Use Gemini 2.5 Flash model (without Google Search for faster responses)
-      // Note: Google Search grounding disabled to reduce latency (was causing 30-60s delays)
-      // The prompt will instruct Gemini to generate representative articles instead
-      const model = genAI.getGenerativeModel({ 
+
+      // Use Gemini 2.5 Flash model with structured output (Response Schema)
+      // Note: Response Schema ensures complete JSON responses and validates structure
+      // Google Search grounding disabled to reduce latency (was causing 30-60s delays)
+      const model = genAI.getGenerativeModel({
         model: 'gemini-2.5-flash',
         generationConfig: {
           temperature: 0.7,
           topP: 0.9,
           topK: 40,
-          maxOutputTokens: 16384, // Limit output tokens for faster responses (~12K tokens for full topic structure)
+          maxOutputTokens: 8192, // Reduced to ensure faster completion and prevent cutoffs (~8K tokens should be sufficient)
+          responseMimeType: 'application/json', // Enforce JSON output format
+          responseSchema: topicSchema as any, // JSON Schema to ensure complete, valid responses (type assertion for SDK compatibility)
         },
       });
 
@@ -144,9 +247,9 @@ export async function POST(request: NextRequest) {
       // Using 55s to leave buffer for platform overhead
       const startTime = Date.now();
       const timeoutMs = 55000; // 55 second timeout (within Pro plan 60s limit)
-      
+
       console.log(`Calling Gemini API for query: "${sanitizedQuery}" (without Google Search for faster response)`);
-      
+
       const result = await Promise.race([
         model.generateContent({
           contents: [
@@ -158,28 +261,37 @@ export async function POST(request: NextRequest) {
           // Google Search disabled - generates articles directly for faster responses
           // tools: [{ googleSearch: {} }] as any,
         }),
-        new Promise<never>((_, reject) => 
+        new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('API request timeout')), timeoutMs)
         ),
       ]);
-      
+
       const response = result.response;
-      const text = response.text();
       const elapsedTime = Date.now() - startTime;
-      
+
       console.log(`Gemini API call completed in ${elapsedTime}ms`);
 
-      // Clean and parse JSON response
-      const cleanedText = cleanPromptResponse(text);
+      // With responseSchema, response.text() returns valid JSON directly
+      // Schema ensures complete JSON structure, but we add repair fallback for edge cases
       let topicData: Topic;
+      const text = response.text(); // Get response text once
 
       try {
-        topicData = JSON.parse(cleanedText);
+        // Try parsing with repair function (handles incomplete JSON)
+        topicData = parseJSONWithRepair(text);
       } catch (parseError) {
-        console.error('JSON parse error:', parseError);
-        console.error('Response text:', cleanedText.substring(0, 500));
-        // Fallback to mock if JSON parsing fails
-        console.warn('Failed to parse Gemini response. Using mock fallback.');
+        console.error('JSON parse error (with repair attempts):', parseError);
+        console.error('Response text (first 1000 chars):', text.substring(0, 1000));
+        console.error('Response text (last 500 chars):', text.substring(Math.max(0, text.length - 500)));
+
+        // Log JSON structure info for debugging
+        const openBraces = (text.match(/\{/g) || []).length;
+        const closeBraces = (text.match(/\}/g) || []).length;
+        const openBrackets = (text.match(/\[/g) || []).length;
+        const closeBrackets = (text.match(/\]/g) || []).length;
+        console.error(`JSON structure: {${openBraces}/${closeBraces}}, [${openBrackets}/${closeBrackets}]`);
+
+        console.warn('Failed to parse Gemini response after repair attempts. Using mock fallback.');
         const mockTopic = getMockTopic(sanitizedQuery);
         return NextResponse.json(mockTopic);
       }
@@ -194,33 +306,33 @@ export async function POST(request: NextRequest) {
       }
 
       // Validate and normalize leanings (ensure they're valid enum values)
-      const validLeanings: Array<Topic['subTopics'][0]['articles'][0]['leaning']> = 
+      const validLeanings: Array<Topic['subTopics'][0]['articles'][0]['leaning']> =
         ['left', 'lean-left', 'center', 'lean-right', 'right', 'neutral'];
-      
+
       // Count real vs generated articles for logging
       let realArticleCount = 0;
       let generatedArticleCount = 0;
-      
+
       topicData.subTopics.forEach((subTopic, subTopicIndex) => {
         // Validate sub-topic structure
         if (!subTopic.id || !subTopic.name || !subTopic.articles || !Array.isArray(subTopic.articles)) {
           console.warn(`Invalid sub-topic structure at index ${subTopicIndex}`);
           return;
         }
-        
+
         subTopic.articles.forEach((article, articleIndex) => {
           // Validate article structure
           if (!article.id || !article.title || !article.source || !article.leaning || !article.summary) {
             console.warn(`Invalid article structure at sub-topic ${subTopicIndex}, article ${articleIndex}`);
             return;
           }
-          
+
           // Validate leaning
           if (!validLeanings.includes(article.leaning)) {
             console.warn(`Invalid leaning "${article.leaning}" found. Defaulting to "center".`);
             article.leaning = 'center';
           }
-          
+
           // Detect if article is real (has URL) or generated
           if (article.url && article.url.trim().length > 0) {
             // Validate URL format
@@ -237,21 +349,21 @@ export async function POST(request: NextRequest) {
           } else {
             generatedArticleCount++;
           }
-          
+
           // Ensure summary has minimum items
           if (!Array.isArray(article.summary) || article.summary.length < 4) {
             console.warn(`Article summary has insufficient items (${article.summary?.length || 0}), expected at least 4`);
           }
-          
+
           // Ensure keyFacts is an array (optional field)
           if (article.keyFacts && !Array.isArray(article.keyFacts)) {
             article.keyFacts = [];
           }
         });
       });
-      
+
       console.log(`Article breakdown: ${realArticleCount} real articles, ${generatedArticleCount} generated articles`);
-      
+
       // Normalize IDs to kebab-case if needed
       const toKebabCase = (str: string): string => {
         return str
@@ -259,16 +371,16 @@ export async function POST(request: NextRequest) {
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-+|-+$/g, '');
       };
-      
+
       if (topicData.id !== toKebabCase(topicData.name)) {
         topicData.id = toKebabCase(topicData.name) || 'topic';
       }
-      
+
       topicData.subTopics.forEach((subTopic, subTopicIndex) => {
         if (subTopic.id !== toKebabCase(subTopic.name)) {
           subTopic.id = toKebabCase(subTopic.name) || `subtopic-${subTopicIndex + 1}`;
         }
-        
+
         subTopic.articles.forEach((article, articleIndex) => {
           if (article.id !== toKebabCase(article.title)) {
             article.id = toKebabCase(article.title) || `${subTopic.id}-article-${articleIndex + 1}`;
@@ -280,14 +392,14 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       // If Gemini API fails, fall back to mock response
       console.error('Gemini API error:', error);
-      
+
       // Handle specific error types
       if (error instanceof Error) {
         // Rate limiting errors
-        if (error.message.includes('quota') || 
-            error.message.includes('429') || 
-            error.message.includes('rate limit') ||
-            error.message.includes('RESOURCE_EXHAUSTED')) {
+        if (error.message.includes('quota') ||
+          error.message.includes('429') ||
+          error.message.includes('rate limit') ||
+          error.message.includes('RESOURCE_EXHAUSTED')) {
           console.warn('Rate limit reached. Using mock fallback.');
           const mockTopic = getMockTopic(sanitizedQuery);
           return NextResponse.json(mockTopic, {
@@ -297,7 +409,7 @@ export async function POST(request: NextRequest) {
             },
           });
         }
-        
+
         // Timeout errors
         if (error.message.includes('timeout') || error.message.includes('API request timeout')) {
           console.warn('API request timeout. Using mock fallback.');
@@ -308,24 +420,24 @@ export async function POST(request: NextRequest) {
             },
           });
         }
-        
+
         // Authentication errors
-        if (error.message.includes('API_KEY') || 
-            error.message.includes('authentication') ||
-            error.message.includes('UNAUTHENTICATED')) {
+        if (error.message.includes('API_KEY') ||
+          error.message.includes('authentication') ||
+          error.message.includes('UNAUTHENTICATED')) {
           console.error('API authentication error:', error.message);
           return NextResponse.json(
-            { 
+            {
               error: 'API authentication failed. Please check your GEMINI_API_KEY configuration.',
               fallback: true,
             },
             { status: 401 }
           );
         }
-        
+
         // Invalid request errors
-        if (error.message.includes('INVALID_ARGUMENT') || 
-            error.message.includes('invalid')) {
+        if (error.message.includes('INVALID_ARGUMENT') ||
+          error.message.includes('invalid')) {
           console.error('Invalid API request:', error.message);
           // Still try to provide mock fallback for user experience
           const mockTopic = getMockTopic(sanitizedQuery);
@@ -348,7 +460,7 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('API route error:', error);
-    
+
     // Handle specific error types
     if (error instanceof Error) {
       if (error.message.includes('GEMINI_API_KEY')) {

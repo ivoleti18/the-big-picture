@@ -121,13 +121,20 @@ OUTPUT FORMAT: Return ONLY valid JSON matching this exact structure:
   ]
 }
 
+CRITICAL - JSON COMPLETION REQUIREMENTS:
+- The JSON response MUST be complete and valid - ensure ALL opening braces { and brackets [ have matching closing braces } and ]
+- The response MUST end with proper JSON structure closing (]}})
+- Do NOT truncate mid-JSON - ensure full completion of the entire structure
+- If approaching token limits, prioritize completing the JSON structure over adding more content
+- Verify the JSON is valid before finishing - count all opening/closing brackets
+
 IMPORTANT:
 - Return ONLY the JSON object, no markdown, no code blocks, no explanations
 - Ensure all required fields are present (omit "url" field - articles are generated)
 - Use only valid leaning values
 - Minimum 2 sub-topics, maximum 3
-- Minimum 2 articles per sub-topic, maximum 5
-- Each article summary must have 4-5 comprehensive bullet points (not fragments)
+- Minimum 2 articles per sub-topic, maximum 4 (reduced to prevent token overflow)
+- Each article summary must have 3-4 concise bullet points (1-2 sentences each)
 - Generate IDs in kebab-case (lowercase, hyphens instead of spaces)
 - Do NOT include "url" field (all articles are generated)
 - Perspective Analysis: Include "perspectiveAnalysis" for EVERY article with detailed breakdown of classification reasoning
@@ -138,6 +145,74 @@ GENERATION STRATEGY:
 3. Ensure diversity of political leanings across all articles
 
 Generate the knowledge map now for: "${query}"`;
+}
+
+/**
+ * Attempts to repair incomplete JSON by closing unclosed brackets/braces and strings
+ */
+function repairIncompleteJSON(jsonString: string): string {
+  let repaired = jsonString.trim();
+  
+  // Count opening and closing brackets/braces (only count non-escaped ones)
+  let openBraces = 0;
+  let closeBraces = 0;
+  let openBrackets = 0;
+  let closeBrackets = 0;
+  let inString = false;
+  let escapeNext = false;
+  
+  for (let i = 0; i < repaired.length; i++) {
+    const char = repaired[i];
+    
+    if (escapeNext) {
+      escapeNext = false;
+      continue;
+    }
+    
+    if (char === '\\') {
+      escapeNext = true;
+      continue;
+    }
+    
+    if (char === '"' && !escapeNext) {
+      inString = !inString;
+      continue;
+    }
+    
+    if (!inString) {
+      if (char === '{') openBraces++;
+      if (char === '}') closeBraces++;
+      if (char === '[') openBrackets++;
+      if (char === ']') closeBrackets++;
+    }
+  }
+  
+  // If we're still in a string at the end, close it
+  if (inString) {
+    // Find the last quote and close the string properly
+    // Remove any incomplete text after the last complete field
+    const lastCompleteField = repaired.lastIndexOf('",');
+    if (lastCompleteField !== -1) {
+      repaired = repaired.substring(0, lastCompleteField + 2);
+    } else {
+      // If no complete field found, try to close the current string
+      repaired += '"';
+    }
+  }
+  
+  // Close incomplete arrays first (they're nested inside objects)
+  const missingBrackets = openBrackets - closeBrackets;
+  if (missingBrackets > 0) {
+    repaired += ']'.repeat(missingBrackets);
+  }
+  
+  // Close incomplete objects
+  const missingBraces = openBraces - closeBraces;
+  if (missingBraces > 0) {
+    repaired += '}'.repeat(missingBraces);
+  }
+  
+  return repaired;
 }
 
 /**
@@ -162,6 +237,38 @@ export function cleanPromptResponse(response: string): string {
   }
   
   return cleaned;
+}
+
+/**
+ * Attempts to parse JSON with repair fallback for incomplete responses
+ */
+export function parseJSONWithRepair(jsonString: string): any {
+  // First try direct parsing
+  try {
+    return JSON.parse(jsonString);
+  } catch (e) {
+    // If parsing fails, try cleaning first
+    try {
+      const cleaned = cleanPromptResponse(jsonString);
+      return JSON.parse(cleaned);
+    } catch (e2) {
+      // If still fails, try repairing incomplete JSON
+      try {
+        const repaired = repairIncompleteJSON(jsonString);
+        return JSON.parse(repaired);
+      } catch (e3) {
+        // If repair also fails, try cleaning then repairing
+        try {
+          const cleaned = cleanPromptResponse(jsonString);
+          const repaired = repairIncompleteJSON(cleaned);
+          return JSON.parse(repaired);
+        } catch (e4) {
+          // All attempts failed
+          throw new Error(`JSON parsing failed after all repair attempts: ${e4 instanceof Error ? e4.message : 'Unknown error'}`);
+        }
+      }
+    }
+  }
 }
 
 /**
