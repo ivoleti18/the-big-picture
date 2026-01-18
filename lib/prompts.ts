@@ -53,6 +53,12 @@ TASK: Generate a comprehensive knowledge map with the following structure:
      * Avoid extreme brevity - ensure readers get the complete gist
    - Key Facts: 3-5 concise, factual data points extracted from real articles OR generated based on the perspective
    - URL: Include ONLY for real articles found via Google Search (omit for generated articles)
+   - Perspective Analysis: Detailed breakdown explaining WHY the article received its political leaning classification:
+     * Language Patterns: Identify specific framing indicators (e.g., "economic burden", "systemic inequality", "market forces"), assess overall sentiment (positive/negative/neutral/mixed), and provide examples of phrases that indicate perspective
+     * Source Classification: Explain how the publication's known bias influences classification, provide historical context about editorial stance, and note reputation factors
+     * Topic Coverage: Identify which aspects of the topic are emphasized, describe coverage distribution (what gets more/less attention), and note any notable omissions or underemphasized perspectives
+     * Confidence Score: Rate confidence in the classification from 0-100 (higher for clear-cut cases, lower for nuanced/ambiguous ones)
+     * Reasoning: Overall explanation summarizing why this specific classification was made
 
 POLITICAL LEANING CLASSIFICATION GUIDE:
 - "left": Progressive, socialist, anti-establishment sources (e.g., Jacobin, The Nation, Mother Jones)
@@ -71,6 +77,7 @@ REQUIREMENTS:
 - Data points: Include specific statistics, numbers, and concrete examples in summaries
 - Key facts: Concise but informative (numbers, percentages, specific claims)
 - URL handling: Include "url" field only for real articles; omit for generated articles
+- Perspective Analysis: Provide detailed analysis for EVERY article explaining why it received its classification - analyze language patterns, source characteristics, and topic coverage emphasis
 
 OUTPUT FORMAT: Return ONLY valid JSON matching this exact structure:
 
@@ -101,7 +108,26 @@ OUTPUT FORMAT: Return ONLY valid JSON matching this exact structure:
             "Specific fact or statistic",
             "Another concrete data point",
             "Important claim or finding"
-          ]
+          ],
+          "perspectiveAnalysis": {
+            "languagePatterns": {
+              "framingIndicators": ["Example framing phrase", "Another indicator"],
+              "sentiment": "positive|negative|neutral|mixed",
+              "examples": ["Specific quote or phrase from article", "Another example"]
+            },
+            "sourceClassification": {
+              "publicationBias": "Explanation of how publication bias influences classification",
+              "editorialStance": "Historical context about the source's editorial perspective",
+              "reputationFactors": ["Factor 1", "Factor 2"]
+            },
+            "topicCoverage": {
+              "emphasisPoints": ["Aspect emphasized", "Another angle highlighted"],
+              "coverageDistribution": "Description of what perspectives get more or less coverage",
+              "omissions": ["Notable missing perspective", "Underemphasized angle"]
+            },
+            "confidenceScore": 85,
+            "reasoning": "Overall explanation of why this classification was made, synthesizing language patterns, source reputation, and coverage emphasis"
+          }
         }
       ]
     }
@@ -118,6 +144,7 @@ IMPORTANT:
 - Each article summary must have 4-5 comprehensive bullet points (not fragments)
 - Generate IDs in kebab-case (lowercase, hyphens instead of spaces)
 - Include "url" field ONLY for real articles found via Google Search
+- Perspective Analysis: Include "perspectiveAnalysis" for EVERY article with detailed breakdown of classification reasoning
 
 SEARCH STRATEGY:
 1. For each sub-topic, search for recent articles from diverse sources
@@ -199,7 +226,70 @@ export const TOPIC_JSON_SCHEMA = {
                   minItems: 0,
                   items: { type: 'string', minLength: 3 }
                 },
-                url: { type: 'string' }
+                url: { type: 'string' },
+                perspectiveAnalysis: {
+                  type: 'object',
+                  required: [
+                    'languagePatterns',
+                    'sourceClassification',
+                    'topicCoverage',
+                    'confidenceScore',
+                    'reasoning'
+                  ],
+                  properties: {
+                    languagePatterns: {
+                      type: 'object',
+                      required: ['framingIndicators', 'sentiment', 'examples'],
+                      properties: {
+                        framingIndicators: {
+                          type: 'array',
+                          items: { type: 'string', minLength: 3 }
+                        },
+                        sentiment: {
+                          type: 'string',
+                          enum: ['positive', 'negative', 'neutral', 'mixed']
+                        },
+                        examples: {
+                          type: 'array',
+                          items: { type: 'string', minLength: 5 }
+                        }
+                      }
+                    },
+                    sourceClassification: {
+                      type: 'object',
+                      required: ['publicationBias', 'editorialStance'],
+                      properties: {
+                        publicationBias: { type: 'string', minLength: 10 },
+                        editorialStance: { type: 'string', minLength: 10 },
+                        reputationFactors: {
+                          type: 'array',
+                          items: { type: 'string', minLength: 3 }
+                        }
+                      }
+                    },
+                    topicCoverage: {
+                      type: 'object',
+                      required: ['emphasisPoints', 'coverageDistribution'],
+                      properties: {
+                        emphasisPoints: {
+                          type: 'array',
+                          items: { type: 'string', minLength: 3 }
+                        },
+                        coverageDistribution: { type: 'string', minLength: 10 },
+                        omissions: {
+                          type: 'array',
+                          items: { type: 'string', minLength: 3 }
+                        }
+                      }
+                    },
+                    confidenceScore: {
+                      type: 'number',
+                      minimum: 0,
+                      maximum: 100
+                    },
+                    reasoning: { type: 'string', minLength: 20 }
+                  }
+                }
               }
             }
           }
