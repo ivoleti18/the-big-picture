@@ -123,22 +123,16 @@ export async function POST(request: NextRequest) {
     try {
       const genAI = getGeminiClient();
       
-      // Use Gemini 1.5 Flash model with JSON mode and Google Search grounding
+      // Use Gemini 2.5 Flash model with Google Search grounding
+      // Note: JSON mode (responseMimeType: 'application/json') is not supported with tools
+      // We'll parse JSON from text response instead
       const model = genAI.getGenerativeModel({ 
-        model: 'gemini-1.5-flash',
-        // Enable structured JSON output
+        model: 'gemini-2.5-flash',
         generationConfig: {
-          responseMimeType: 'application/json',
           temperature: 0.7,
           topP: 0.9,
           topK: 40,
         },
-        // Enable Google Search grounding for real article discovery
-        tools: [
-          {
-            googleSearchRetrieval: {},
-          },
-        ],
       });
 
       // Generate prompt with hybrid approach instructions
@@ -148,8 +142,18 @@ export async function POST(request: NextRequest) {
       const startTime = Date.now();
       const timeoutMs = 60000; // 60 second timeout
       
+      console.log(`Calling Gemini API for query: "${sanitizedQuery}"`);
+      
       const result = await Promise.race([
-        model.generateContent(prompt),
+        model.generateContent({
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: prompt }],
+            },
+          ],
+          tools: [{ googleSearch: {} }] as any, // Use googleSearch tool (type assertion for SDK compatibility)
+        }),
         new Promise<never>((_, reject) => 
           setTimeout(() => reject(new Error('API request timeout')), timeoutMs)
         ),

@@ -1,15 +1,12 @@
 'use client';
 
-import { useMemo } from 'react';
-import { X, ExternalLink, Brain, Target, Lightbulb, AlertCircle, Layers } from 'lucide-react';
+import { X, ExternalLink, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import type { SelectedArticle, PoliticalLeaning } from '@/lib/types';
-import { generatePerspectiveAnalysis } from '@/lib/comparison-analysis';
 
 interface ContextSidebarProps {
   article: SelectedArticle | null;
@@ -41,7 +38,6 @@ export function ContextSidebar({ article, onClose }: ContextSidebarProps) {
   }
 
   const style = leaningStyles[article.leaning];
-  const perspectiveAnalysis = useMemo(() => generatePerspectiveAnalysis(article), [article]);
 
   return (
     <div className="h-full flex flex-col">
@@ -129,113 +125,6 @@ export function ContextSidebar({ article, onClose }: ContextSidebarProps) {
               <Separator />
             </>
           )}
-
-          {/* Perspective Analysis */}
-          <div>
-            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-              <Layers className="w-4 h-4 text-blue-500" />
-              Perspective Analysis
-            </h3>
-
-            <div className="space-y-3">
-              {/* Framing */}
-              <Card className="border-blue-500/30 bg-blue-500/10">
-                <CardContent className="p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Target className="w-3.5 h-3.5 text-blue-400" />
-                    <span className="text-xs font-medium text-foreground/80">Framing</span>
-                  </div>
-                  <p className="text-xs text-foreground/90 leading-relaxed">{perspectiveAnalysis.framing}</p>
-                </CardContent>
-              </Card>
-
-              {/* Underlying Values */}
-              {perspectiveAnalysis.underlyingValues.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
-                    <span className="text-xs font-medium text-foreground/80">Underlying Values</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {perspectiveAnalysis.underlyingValues.map((value, index) => (
-                      <Badge
-                        key={index}
-                        variant="outline"
-                        className="text-xs px-2 py-0.5 border-amber-500/30 text-amber-400 bg-amber-500/10"
-                      >
-                        {value}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Key Emphases */}
-              {perspectiveAnalysis.keyEmphases.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                    <span className="text-xs font-medium text-foreground/80">Key Emphases</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {perspectiveAnalysis.keyEmphases.map((emphasis, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="text-xs px-2 py-0.5 bg-primary/10 text-primary border border-primary/30"
-                      >
-                        {emphasis}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Potential Omissions */}
-              {perspectiveAnalysis.potentialOmissions.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertCircle className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span className="text-xs font-medium text-foreground/80">Topics Not Emphasized</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {perspectiveAnalysis.potentialOmissions.map((omission, index) => (
-                      <Badge
-                        key={index}
-                        variant="secondary"
-                        className="text-xs px-2 py-0.5 bg-muted/50 text-muted-foreground"
-                      >
-                        {omission}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Language Patterns */}
-              {perspectiveAnalysis.languagePatterns.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Layers className="w-3.5 h-3.5 text-purple-500" />
-                    <span className="text-xs font-medium text-foreground/80">Language Patterns</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {perspectiveAnalysis.languagePatterns.map((pattern, index) => (
-                      <Badge
-                        key={index}
-                        variant="outline"
-                        className="text-xs px-2 py-0.5 border-purple-500/30 text-purple-400 bg-purple-500/10"
-                      >
-                        {pattern}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <Separator />
 
           {/* Read Original */}
           {article.url && (
