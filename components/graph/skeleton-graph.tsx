@@ -11,6 +11,7 @@ import {
   type Node,
   type Edge,
   BackgroundVariant,
+  BezierEdge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -127,6 +128,8 @@ export function SkeletonGraph() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodeTypes={skeletonNodeTypes}
+        edgeTypes={{ default: BezierEdge }}
+        defaultEdgeOptions={{ type: 'default' }}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.3}

@@ -11,6 +11,7 @@ import {
   type Node,
   type NodeMouseHandler,
   BackgroundVariant,
+  BezierEdge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -102,6 +103,8 @@ export function KnowledgeGraph({
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
+        edgeTypes={{ default: BezierEdge }}
+        defaultEdgeOptions={{ type: 'default' }}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.3}
