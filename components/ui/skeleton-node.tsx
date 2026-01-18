@@ -3,6 +3,36 @@
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 
+// Inject shimmer animation styles
+if (typeof document !== 'undefined') {
+  const styleId = 'skeleton-shimmer-styles';
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+      @keyframes skeleton-shimmer {
+        0% {
+          background-position: -200% 0;
+        }
+        100% {
+          background-position: 200% 0;
+        }
+      }
+      .skeleton-shimmer {
+        background: linear-gradient(
+          90deg,
+          var(--muted) 25%,
+          var(--accent) 50%,
+          var(--muted) 75%
+        );
+        background-size: 200% 100%;
+        animation: skeleton-shimmer 2s infinite;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}
+
 // Central Skeleton Node
 export const SkeletonCentralNode = memo(function SkeletonCentralNode({ data }: NodeProps) {
   return (

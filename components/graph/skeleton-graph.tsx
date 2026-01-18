@@ -44,13 +44,12 @@ function generateSkeletonGraph() {
   nodes.push(centralNode);
 
   // Two sub-topics positioned around the center
-  const subTopicCount = 2;
   const subTopics = [
     { id: 'skeleton-subtopic-1', angle: -Math.PI / 2 }, // Top
     { id: 'skeleton-subtopic-2', angle: Math.PI / 2 },  // Bottom
   ];
 
-  subTopics.forEach((subTopic, subIndex) => {
+  subTopics.forEach((subTopic) => {
     const angle = subTopic.angle;
     const subX = centerX + subTopicRadius * Math.cos(angle);
     const subY = centerY + subTopicRadius * Math.sin(angle);
