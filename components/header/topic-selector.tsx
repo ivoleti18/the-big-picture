@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -8,7 +8,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Input } from '@/components/ui/input';
 import type { Topic } from '@/lib/types';
 import { demoTopics } from '@/lib/demo-data';
 
@@ -20,18 +19,6 @@ interface TopicSelectorProps {
 export function TopicSelector({ selectedTopic, onTopicChange }: TopicSelectorProps) {
   return (
     <div className="flex items-center gap-3">
-      {/* Search Input (cosmetic for demo) */}
-      <div className="relative hidden sm:block">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          type="text"
-          placeholder="Search topics..."
-          className="pl-9 w-[200px] md:w-[280px] bg-muted/50 border-border"
-          value={selectedTopic.name}
-          readOnly
-        />
-      </div>
-
       {/* Topic Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
