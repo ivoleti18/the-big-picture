@@ -49,6 +49,8 @@ export function generateGraphFromTopic(topic: Topic): GraphData {
       target: `subtopic-${subTopic.id}`,
       style: { stroke: 'var(--border)', strokeWidth: 2 },
       animated: false,
+      selectable: false,
+      deletable: false,
     });
 
     // Calculate positions for articles around each sub-topic
@@ -90,6 +92,8 @@ export function generateGraphFromTopic(topic: Topic): GraphData {
         target: articleNodeId,
         style: { stroke: 'var(--border)', strokeWidth: 1.5 },
         animated: false,
+        selectable: false,
+        deletable: false,
       });
     });
   });

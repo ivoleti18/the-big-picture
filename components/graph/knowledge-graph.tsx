@@ -102,8 +102,6 @@ export function KnowledgeGraph({
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
-        edgesUpdatable={false}
-        edgesFocusable={false}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.3}
