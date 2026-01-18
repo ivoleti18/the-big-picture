@@ -100,9 +100,9 @@ export function ComparisonPanel({ articles, onRemoveArticle, onClose }: Comparis
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-border">
+      <div className="p-4 border-b border-border shrink-0">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
             <ArrowLeftRight className="w-5 h-5 text-yellow-500" />
@@ -118,7 +118,7 @@ export function ComparisonPanel({ articles, onRemoveArticle, onClose }: Comparis
         </p>
       </div>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="p-4 space-y-4">
           {/* Selected Articles */}
           {articles.map((article) => {

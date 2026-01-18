@@ -40,9 +40,9 @@ export function ContextSidebar({ article, onClose }: ContextSidebarProps) {
   const style = leaningStyles[article.leaning];
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-border">
+      <div className="p-4 border-b border-border shrink-0">
         <div className="flex items-start justify-between gap-2 mb-3">
           <Badge
             className={cn(
@@ -82,7 +82,7 @@ export function ContextSidebar({ article, onClose }: ContextSidebarProps) {
       </div>
 
       {/* Content */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="p-4 space-y-4">
           {/* Summary Section */}
           <div>
