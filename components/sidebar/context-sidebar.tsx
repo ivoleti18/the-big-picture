@@ -1,10 +1,11 @@
 'use client';
 
-import { X, ExternalLink, Brain } from 'lucide-react';
+import { X, ExternalLink, Brain, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import type { SelectedArticle, PoliticalLeaning } from '@/lib/types';
 
@@ -40,9 +41,9 @@ export function ContextSidebar({ article, onClose }: ContextSidebarProps) {
   const style = leaningStyles[article.leaning];
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-border">
+      <div className="p-4 border-b border-border shrink-0">
         <div className="flex items-start justify-between gap-2 mb-3">
           <Badge
             className={cn(
@@ -66,23 +67,23 @@ export function ContextSidebar({ article, onClose }: ContextSidebarProps) {
           </Button>
         </div>
 
-        <h2 className="text-lg font-bold text-foreground leading-tight mb-2">
+        <h2 className="text-lg font-bold text-foreground leading-tight mb-2 break-words">
           {article.title}
         </h2>
 
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Source:</span>
-          <span className="font-medium text-foreground">{article.source}</span>
+        <div className="flex items-center gap-2 text-sm min-w-0">
+          <span className="text-muted-foreground shrink-0">Source:</span>
+          <span className="font-medium text-foreground break-words min-w-0">{article.source}</span>
         </div>
 
-        <div className="flex items-center gap-2 text-sm mt-1">
-          <span className="text-muted-foreground">Topic:</span>
-          <span className="font-medium text-foreground">{article.subTopicName}</span>
+        <div className="flex items-center gap-2 text-sm mt-1 min-w-0">
+          <span className="text-muted-foreground shrink-0">Topic:</span>
+          <span className="font-medium text-foreground break-words min-w-0">{article.subTopicName}</span>
         </div>
       </div>
 
       {/* Content */}
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="p-4 space-y-4">
           {/* Summary Section */}
           <div>
@@ -92,9 +93,9 @@ export function ContextSidebar({ article, onClose }: ContextSidebarProps) {
             </h3>
             <ul className="space-y-3">
               {article.summary.map((point, index) => (
-                <li key={index} className="flex gap-3 text-sm">
+                <li key={index} className="flex gap-3 text-sm min-w-0">
                   <span className="text-muted-foreground shrink-0 mt-1">•</span>
-                  <span className="text-foreground/90 leading-relaxed">{point}</span>
+                  <span className="text-foreground/90 leading-relaxed break-words">{point}</span>
                 </li>
               ))}
             </ul>
@@ -122,6 +123,158 @@ export function ContextSidebar({ article, onClose }: ContextSidebarProps) {
                   ))}
                 </div>
               </div>
+              <Separator />
+            </>
+          )}
+
+          {/* Perspective Analysis */}
+          {article.perspectiveAnalysis && (
+            <>
+              <Collapsible defaultOpen={false}>
+                <CollapsibleTrigger className="w-full group">
+                  <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2 w-full justify-between hover:text-primary transition-colors">
+                    <div className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                      Perspective Analysis
+                    </div>
+                    <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  </h3>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4">
+                  {/* Confidence Score */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-muted-foreground">Confidence Score</span>
+                      <span className="text-xs font-semibold text-foreground">{article.perspectiveAnalysis.confidenceScore}%</span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full transition-all duration-300",
+                          article.perspectiveAnalysis.confidenceScore >= 75 ? "bg-green-500" :
+                          article.perspectiveAnalysis.confidenceScore >= 50 ? "bg-yellow-500" :
+                          "bg-orange-500"
+                        )}
+                        style={{ width: `${article.perspectiveAnalysis.confidenceScore}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Overall Reasoning */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-foreground mb-2">Why This Classification</h4>
+                    <p className="text-sm text-foreground/80 leading-relaxed">{article.perspectiveAnalysis.reasoning}</p>
+                  </div>
+
+                  {/* Language Patterns */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-foreground mb-2">Language Patterns</h4>
+                    <div className="space-y-2">
+                      <div>
+                        <span className="text-xs text-muted-foreground">Sentiment: </span>
+                        <Badge variant="outline" className="text-xs ml-1">
+                          {article.perspectiveAnalysis.languagePatterns.sentiment}
+                        </Badge>
+                      </div>
+                      {article.perspectiveAnalysis.languagePatterns.framingIndicators.length > 0 && (
+                        <div>
+                          <span className="text-xs text-muted-foreground block mb-1">Framing Indicators:</span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {article.perspectiveAnalysis.languagePatterns.framingIndicators.map((indicator, index) => (
+                              <Badge
+                                key={index}
+                                variant="secondary"
+                                className="text-xs bg-purple-500/10 text-purple-400 border border-purple-500/30"
+                              >
+                                {indicator}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {article.perspectiveAnalysis.languagePatterns.examples.length > 0 && (
+                        <div>
+                          <span className="text-xs text-muted-foreground block mb-1">Examples:</span>
+                          <ul className="space-y-1">
+                            {article.perspectiveAnalysis.languagePatterns.examples.map((example, index) => (
+                              <li key={index} className="text-sm text-foreground/70 italic">
+                                "{example}"
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Source Classification */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-foreground mb-2">Source Classification</h4>
+                    <div className="space-y-2">
+                      <div>
+                        <span className="text-xs text-muted-foreground block mb-1">Publication Bias:</span>
+                        <p className="text-sm text-foreground/80 leading-relaxed">{article.perspectiveAnalysis.sourceClassification.publicationBias}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground block mb-1">Editorial Stance:</span>
+                        <p className="text-sm text-foreground/80 leading-relaxed">{article.perspectiveAnalysis.sourceClassification.editorialStance}</p>
+                      </div>
+                      {article.perspectiveAnalysis.sourceClassification.reputationFactors && 
+                       article.perspectiveAnalysis.sourceClassification.reputationFactors.length > 0 && (
+                        <div>
+                          <span className="text-xs text-muted-foreground block mb-1">Reputation Factors:</span>
+                          <ul className="space-y-1">
+                            {article.perspectiveAnalysis.sourceClassification.reputationFactors.map((factor, index) => (
+                              <li key={index} className="text-sm text-foreground/70 flex gap-2">
+                                <span className="text-muted-foreground shrink-0 mt-1">•</span>
+                                <span>{factor}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Topic Coverage */}
+                  <div>
+                    <h4 className="text-xs font-semibold text-foreground mb-2">Topic Coverage</h4>
+                    <div className="space-y-2">
+                      {article.perspectiveAnalysis.topicCoverage.emphasisPoints.length > 0 && (
+                        <div>
+                          <span className="text-xs text-muted-foreground block mb-1">Emphasis Points:</span>
+                          <ul className="space-y-1">
+                            {article.perspectiveAnalysis.topicCoverage.emphasisPoints.map((point, index) => (
+                              <li key={index} className="text-sm text-foreground/70 flex gap-2 min-w-0">
+                                <span className="text-muted-foreground shrink-0 mt-1">•</span>
+                                <span className="break-words">{point}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-xs text-muted-foreground block mb-1">Coverage Distribution:</span>
+                        <p className="text-sm text-foreground/80 leading-relaxed">{article.perspectiveAnalysis.topicCoverage.coverageDistribution}</p>
+                      </div>
+                      {article.perspectiveAnalysis.topicCoverage.omissions && 
+                       article.perspectiveAnalysis.topicCoverage.omissions.length > 0 && (
+                        <div>
+                          <span className="text-xs text-muted-foreground block mb-1">Notable Omissions:</span>
+                          <ul className="space-y-1">
+                            {article.perspectiveAnalysis.topicCoverage.omissions.map((omission, index) => (
+                              <li key={index} className="text-sm text-foreground/70 flex gap-2 min-w-0">
+                                <span className="text-muted-foreground shrink-0 mt-1">•</span>
+                                <span className="break-words">{omission}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
               <Separator />
             </>
           )}
