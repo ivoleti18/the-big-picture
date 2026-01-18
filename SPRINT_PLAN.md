@@ -21,10 +21,10 @@ This sprint plan breaks down the development of The Perspective Engine into mana
 **Estimated time:** 15 minutes
 
 ### Task 1.2: Make Nodes Draggable
-- [ ] Update `custom-nodes.tsx` - remove `draggable: false` from all node types
+- [ ] Update `custom-nodes.tsx` - remove `draggable: false` from all node types (except central node)
 - [ ] Update `knowledge-graph.tsx` - ensure React Flow allows node dragging
-- [ ] Update `graph-utils.ts` - remove `draggable: false` from node generation
-- [ ] Test that all three node types (central, subTopic, article) are draggable
+- [ ] Update `graph-utils.ts` - remove `draggable: false` from subTopic and article node generation (keep central node non-draggable)
+- [ ] Test that subTopic and article node types are draggable (central node should remain fixed)
 - [ ] Verify edges update correctly when nodes are moved
 
 **Files to modify:**
@@ -34,7 +34,21 @@ This sprint plan breaks down the development of The Perspective Engine into mana
 
 **Estimated time:** 30 minutes
 
-### Task 1.3: Add Interactive Node Features
+### Task 1.3: Remove Unconnected Handles & Make Edges Non-Clickable
+- [ ] Remove handle circles (connection points) that aren't connected to anything
+- [ ] Update `custom-nodes.tsx` to conditionally render handles only where needed
+- [ ] Ensure handles are not clickable/interactive
+- [ ] Make edges non-clickable in React Flow configuration
+- [ ] Test that only nodes are clickable, not edges or unused handles
+- [ ] Verify visual cleanup doesn't affect edge connections
+
+**Files to modify:**
+- `components/graph/custom-nodes.tsx`
+- `components/graph/knowledge-graph.tsx`
+
+**Estimated time:** 30 minutes
+
+### Task 1.4: Add Interactive Node Features
 - [ ] Add hover effects to nodes (scale, shadow, border highlight)
 - [ ] Add visual feedback when dragging (opacity change, cursor change)
 - [ ] Ensure click events still work when nodes are draggable
