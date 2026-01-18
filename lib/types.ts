@@ -41,6 +41,45 @@ export interface ComparisonResult {
   differences: string[];
 }
 
+// Analytical comparison structures
+export interface SharedFactualBaseline {
+  fact: string;
+  citedBy: string[]; // Source names that mention this fact
+}
+
+export interface DivergencePoint {
+  claim: string;
+  framings: Array<{
+    leaning: PoliticalLeaning;
+    source: string;
+    framing: string;
+    underlyingValue?: string; // safety, freedom, growth, equity, security, etc.
+  }>;
+}
+
+export interface EvidencePattern {
+  articleId: string;
+  source: string;
+  leaning: PoliticalLeaning;
+  emphasizedEvidence: string[];
+  omittedTopics: string[];
+}
+
+export interface AnalyticalComparison {
+  sharedBaseline: SharedFactualBaseline[];
+  divergences: DivergencePoint[];
+  evidenceAnalysis: EvidencePattern[];
+}
+
+// Perspective analysis for individual articles
+export interface PerspectiveAnalysis {
+  framing: string;
+  underlyingValues: string[];
+  keyEmphases: string[];
+  potentialOmissions: string[];
+  languagePatterns: string[];
+}
+
 export const leaningColors: Record<PoliticalLeaning, string> = {
   'left': 'bg-spectrum-left',
   'lean-left': 'bg-spectrum-lean-left',
