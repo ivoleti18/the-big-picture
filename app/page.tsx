@@ -113,7 +113,7 @@ export default function HomePage() {
         </main>
 
         {/* Sidebar */}
-        <aside className="w-[380px] border-l border-border bg-card hidden lg:flex flex-col">
+        <aside className="w-[380px] border-l border-border bg-card hidden lg:flex flex-col h-full overflow-hidden">
           {compareMode ? (
             <ComparisonPanel
               articles={compareArticles}
