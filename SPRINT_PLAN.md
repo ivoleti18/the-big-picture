@@ -430,6 +430,198 @@ The hybrid approach (Task 3.1) will:
 
 ---
 
+## Phase 9: UI Improvements & Polish
+**Goal:** Enhance graph visual quality, usability, and branding
+
+### Task 9.1: Make Edges Thicker (DO NOW - UI Change)
+**Priority:** Medium (Pure UI change)
+- [ ] Update `lib/graph-utils.ts` - change edge `strokeWidth` from 1.5 to 3.0 (double current width)
+- [ ] Ensure edges remain visible and well-attached to nodes
+- [ ] Test edge thickness looks good at different zoom levels
+- [ ] Verify edges stay visually connected to nodes during node dragging/movement
+- [ ] Test edge attachment during rapid node movements and animations
+
+**Acceptance Criteria:**
+- Edges are double the current thickness (3px instead of 1.5px)
+- Edges remain visually attached to nodes at all times during node movement
+- No visual disconnection when nodes are dragged
+- No visual lag or frames where edges appear detached during node movement
+- Edge endpoints stay anchored to node handles without any visual glitches
+
+**Files to modify:**
+- `lib/graph-utils.ts`
+
+**Estimated time:** 15 minutes
+
+### Task 9.2: Implement Edge Routing to Handles (DO NOW - Requires Logic)
+**Priority:** High (Requires React Flow configuration/logic)
+- [ ] Update `lib/graph-utils.ts` - configure edges to connect via handles on all sides of nodes
+- [ ] Ensure edges can connect to handles on any side of nodes (top, bottom, left, right)
+- [ ] Configure React Flow edge routing to reduce edge crossings and visual tangling
+- [ ] Update edge creation logic to allow connection to any side of nodes
+- [ ] Test edge routing reduces visual tangling and edge crossings in the graph
+- [ ] Verify edges update routing appropriately when nodes are dragged
+
+**Acceptance Criteria:**
+- Edges connect via handles positioned on all sides of nodes (top/right/bottom/left)
+- Edges can connect to any side of nodes, enabling flexible routing
+- Graph looks less tangled with reduced edge crossings
+- Edge routing updates smoothly when nodes are moved
+- Handle-based routing reduces visual complexity compared to fixed connection points
+
+**Files to modify:**
+- `lib/graph-utils.ts`
+- `components/graph/knowledge-graph.tsx` (if React Flow config needed)
+
+**Estimated time:** 1 hour
+
+### Task 9.3: Implement Bounded Canvas (DO NOW - Requires Logic)
+**Priority:** High (Requires React Flow configuration)
+- [ ] Configure React Flow viewport bounds to limit panning and node dragging
+- [ ] Implement clamped panning that prevents users from panning into empty infinity space
+- [ ] Define a bounding box around the graph content
+- [ ] Ensure nodes cannot be dragged outside the bounding region
+- [ ] Implement invisible boundary - no visual markers, just movement restrictions
+- [ ] Test panning is clamped to the defined bounding box
+- [ ] Verify nodes stay within bounds when dragged
+- [ ] Ensure users cannot pan/drag nodes beyond the bounded area
+
+**Acceptance Criteria:**
+- Panning is clamped to a defined bounding box around the graph content
+- Nodes cannot be dragged outside the bounding region
+- User cannot pan into empty infinity space
+- No infinite scrolling or panning beyond graph boundaries
+- Bounds are invisible (no visual markers, just movement restrictions)
+- Canvas prevents users from losing the graph view in empty space
+
+**Files to modify:**
+- `components/graph/knowledge-graph.tsx`
+- `components/graph/skeleton-graph.tsx` (if bounds needed there too)
+
+**Estimated time:** 1 hour
+
+### Task 9.4: Remove Minimap Component (DO NOW - UI Change)
+**Priority:** Low (Pure UI change)
+- [ ] Remove `<MiniMap>` component from `knowledge-graph.tsx`
+- [ ] Remove `<MiniMap>` component from `skeleton-graph.tsx`
+- [ ] Remove `MiniMap` import if no longer used
+- [ ] Remove minimap-related CSS if any
+- [ ] Test graph still functions correctly without minimap
+
+**Acceptance Criteria:**
+- Minimap is completely removed from bottom-right corner
+- No minimap visible in both loading and loaded graph states
+- No errors or unused imports
+
+**Files to modify:**
+- `components/graph/knowledge-graph.tsx`
+- `components/graph/skeleton-graph.tsx`
+- `app/globals.css` (if minimap-specific styles exist)
+
+**Estimated time:** 15 minutes
+
+### Task 9.5: Fix Sidebar Overflow (DO NOW - UI Change)
+**Priority:** Medium (Pure UI change)
+- [ ] Verify `ScrollArea` component is working correctly in `context-sidebar.tsx`
+- [ ] Ensure sidebar content is fully scrollable when it exceeds viewport height
+- [ ] Test with long article summaries and perspective analysis sections
+- [ ] Verify no content/boxes are cut off at the bottom
+- [ ] Ensure sidebar header remains fixed while content scrolls
+- [ ] Test with comparison panel as well
+
+**Acceptance Criteria:**
+- All sidebar content is accessible via scrolling
+- No content is cut off or hidden at the bottom
+- Sidebar header (with title/badge) remains visible when scrolling
+- Works for both ContextSidebar and ComparisonPanel
+
+**Files to modify:**
+- `components/sidebar/context-sidebar.tsx`
+- `components/comparison/comparison-panel.tsx` (verify scrolling there too)
+
+**Estimated time:** 30 minutes
+
+### Task 9.6: Fix Zoom Controls & Disclaimer Overlap (DO NOW - UI Change)
+**Priority:** Medium (Pure UI change)
+- [ ] Check current positioning of React Flow `<Controls>` component (zoom controls)
+- [ ] Adjust controls position to avoid overlap with legal disclaimer at bottom
+- [ ] Add bottom offset that always clears the disclaimer height
+- [ ] Ensure safe-area padding accounts for disclaimer at all screen sizes
+- [ ] Test controls are fully visible and clickable across different screen sizes
+- [ ] Verify disclaimer doesn't cover zoom controls at any viewport size
+
+**Acceptance Criteria:**
+- Zoom controls are fully visible and not cut off by disclaimer
+- Controls have a bottom offset that always clears the disclaimer height
+- All control buttons are clickable and accessible
+- Works correctly across different screen sizes and viewport heights
+- No overlap occurs between controls and disclaimer at any screen size
+
+**Files to modify:**
+- `components/graph/knowledge-graph.tsx`
+- `components/graph/skeleton-graph.tsx`
+- `app/globals.css` (if custom positioning needed)
+
+**Estimated time:** 30 minutes
+
+### Task 9.7: Update App Branding Text (DO NOW - UI Change)
+**Priority:** Low (Pure UI change)
+- [ ] Update app name to "TheBigPicture" (no spaces) in `app-header.tsx`
+- [ ] Update tagline to "Where complexity becomes clarity" in `app-header.tsx`
+- [ ] Update metadata title in `app/layout.tsx` to "TheBigPicture"
+- [ ] Update metadata description in `app/layout.tsx` with new tagline
+- [ ] Verify branding appears correctly in header
+
+**Acceptance Criteria:**
+- App name displays as "TheBigPicture" (no spaces) in header
+- Tagline displays as "Where complexity becomes clarity"
+- Browser tab title shows "TheBigPicture"
+- All branding text updated consistently
+
+**Files to modify:**
+- `components/header/app-header.tsx`
+- `app/layout.tsx`
+
+**Estimated time:** 15 minutes
+
+### Task 9.8: Enforce 3-5 Articles Per Node with Clickable Links (DO LATER - Blocked by Gemini Integration)
+**Priority:** High (Requires Gemini API changes - PLAN NOW, IMPLEMENT LATER)
+**Status:** ⚠️ WAIT to implement until Gemini integration is complete (Phase 3)
+- [ ] Update `lib/prompts.ts` - modify prompt to enforce 3-5 articles per sub-topic
+- [ ] Add validation in Gemini prompt: "Generate exactly 3-5 articles per sub-topic, no more, no less"
+- [ ] Update `app/api/generate-topic/route.ts` - add post-processing validation to ensure 3-5 articles
+- [ ] Implement deduplication logic to prevent duplicate articles across sub-topics
+- [ ] Add clustering/similarity detection to avoid redundant articles with same perspective
+- [ ] If API returns fewer than 3 articles, regenerate or add placeholder logic
+- [ ] If API returns more than 5 articles, truncate to 5 (apply deduplication first)
+- [ ] Ensure all articles include clickable URLs/links in the data structure
+- [ ] Update article node components to support clickable article links
+- [ ] Update demo data to match 3-5 articles constraint with clickable links
+- [ ] Test article count validation, deduplication, and link functionality
+
+**Acceptance Criteria:**
+- Each sub-topic node has exactly 3-5 article nodes connected (no more, no less)
+- Gemini prompt explicitly requests 3-5 articles per sub-topic
+- API response is validated to ensure 3-5 articles per sub-topic
+- Articles are deduplicated across sub-topics to prevent redundancy
+- Clustering/similarity detection prevents overload from near-duplicate articles
+- All articles have clickable links/URLs that open in new tab/window
+- Article nodes or sidebar display clickable article links
+- Graph renders correctly with the constrained article count
+- Deduplication and clustering work correctly to maintain 3-5 unique articles per sub-topic
+
+**Files to modify:**
+- `lib/prompts.ts`
+- `app/api/generate-topic/route.ts`
+- `lib/demo-data.ts` (update demo data)
+- `components/graph/custom-nodes.tsx` (if article links needed on nodes)
+- `components/sidebar/context-sidebar.tsx` (ensure article links are clickable)
+
+**Estimated time:** 1.5 hours (includes deduplication and clustering logic)
+**Blocked by:** Phase 3 (AI Integration Implementation) must be complete first
+
+---
+
 ## Success Criteria Checklist
 
 Based on PRD Section 8, verify:
@@ -445,17 +637,33 @@ Based on PRD Section 8, verify:
 
 ---
 
-## Estimated Total Time: ~18-21 hours
+## Estimated Total Time: ~22-25 hours (including Phase 9 UI improvements)
 
 ## Priority Order
 1. **Phase 1** (Cleanup) - Foundation for everything else
 2. **Phase 2** (API Setup) - Required before AI integration
 3. **Phase 3** (AI Integration) - Core functionality
-4. **Phase 4** (Skeleton Loaders) - Critical for UX
-5. **Phase 5** (Perspective Analysis) - New feature to explain classifications
-6. **Phase 6** (Polish) - Nice to have
-7. **Phase 7** (Testing) - Important for reliability
-8. **Phase 8** (Deployment) - Final prep
+4. **Phase 9** (UI Improvements) - HIGH PRIORITY: Tasks 9.2 (Edge Routing), 9.3 (Bounded Canvas) should be done early
+5. **Phase 4** (Skeleton Loaders) - Critical for UX
+6. **Phase 5** (Perspective Analysis) - New feature to explain classifications
+7. **Phase 6** (Polish) - Nice to have
+8. **Phase 7** (Testing) - Important for reliability
+9. **Phase 8** (Deployment) - Final prep
+
+## Phase 9 Task Priority (Within Phase)
+**DO NOW (High Priority - Requires Logic/Config):**
+- Task 9.2: Edge Routing to Nearest Handle
+- Task 9.3: Bounded Canvas
+
+**DO NOW (Medium/Low Priority - Pure UI):**
+- Task 9.1: Make Edges Thicker
+- Task 9.5: Fix Sidebar Overflow
+- Task 9.6: Fix Zoom Controls & Disclaimer Overlap
+- Task 9.7: Update App Branding Text
+- Task 9.4: Remove Minimap
+
+**DO LATER (Blocked by Gemini Integration):**
+- Task 9.8: Enforce 3-5 Articles Per Node (wait until Phase 3 complete)
 
 ## Notes
 - Each task should be completed and tested before moving to the next
