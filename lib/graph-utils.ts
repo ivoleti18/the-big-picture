@@ -90,7 +90,7 @@ export function generateGraphFromTopic(topic: Topic): GraphData {
         id: `edge-${subTopic.id}-${article.id}`,
         source: `subtopic-${subTopic.id}`,
         target: articleNodeId,
-        style: { stroke: 'var(--border)', strokeWidth: 1.5 },
+        style: { stroke: 'var(--border)', strokeWidth: 3.0 },
         animated: false,
         selectable: false,
         deletable: false,
