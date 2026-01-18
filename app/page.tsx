@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { AppHeader } from '@/components/header/app-header';
 import { KnowledgeGraph } from '@/components/graph/knowledge-graph';
+import { SkeletonGraph } from '@/components/graph/skeleton-graph';
 import { ContextSidebar } from '@/components/sidebar/context-sidebar';
 import { ComparisonPanel } from '@/components/comparison/comparison-panel';
 import { SpectrumLegend } from '@/components/ui/spectrum-legend';
@@ -15,6 +16,7 @@ export default function HomePage() {
   const [selectedArticle, setSelectedArticle] = useState<SelectedArticle | null>(null);
   const [compareMode, setCompareMode] = useState(false);
   const [compareArticles, setCompareArticles] = useState<SelectedArticle[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleTopicChange = useCallback((topic: Topic) => {
     setSelectedTopic(topic);
@@ -78,14 +80,18 @@ export default function HomePage() {
       <div className="flex-1 flex overflow-hidden">
         {/* Graph Area */}
         <main className="flex-1 relative">
-          <KnowledgeGraph
-            topic={selectedTopic}
-            onArticleSelect={handleArticleSelect}
-            selectedArticleId={selectedArticle ? `article-${selectedArticle.id}` : null}
-            compareMode={compareMode}
-            compareArticles={compareArticles}
-            onCompareArticleToggle={handleCompareArticleToggle}
-          />
+          {isLoading ? (
+            <SkeletonGraph />
+          ) : (
+            <KnowledgeGraph
+              topic={selectedTopic}
+              onArticleSelect={handleArticleSelect}
+              selectedArticleId={selectedArticle ? `article-${selectedArticle.id}` : null}
+              compareMode={compareMode}
+              compareArticles={compareArticles}
+              onCompareArticleToggle={handleCompareArticleToggle}
+            />
+          )}
           
           {/* Spectrum Legend */}
           <div className="absolute bottom-0 left-0 right-0">
