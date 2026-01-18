@@ -132,6 +132,7 @@ export async function POST(request: NextRequest) {
           temperature: 0.7,
           topP: 0.9,
           topK: 40,
+          maxOutputTokens: 16384, // Limit output tokens for faster responses (~12K tokens for full topic structure)
         },
       });
 
@@ -139,8 +140,10 @@ export async function POST(request: NextRequest) {
       const prompt = generateTopicPrompt(sanitizedQuery);
 
       // Call Gemini API with timeout
+      // Note: Vercel limits: Hobby (10s), Pro (60s), Enterprise (300s)
+      // Using 55s to leave buffer for platform overhead
       const startTime = Date.now();
-      const timeoutMs = 60000; // 60 second timeout
+      const timeoutMs = 55000; // 55 second timeout (within Pro plan 60s limit)
       
       console.log(`Calling Gemini API for query: "${sanitizedQuery}"`);
       

@@ -13,11 +13,11 @@ interface ComparisonAnalysisResponse {
 // Initialize Gemini client
 function getGeminiClient() {
   const apiKey = process.env.GEMINI_API_KEY;
-  
+
   if (!apiKey || apiKey === 'your_api_key_here') {
     throw new Error('GEMINI_API_KEY is not configured. Please set it in .env.local');
   }
-  
+
   return new GoogleGenerativeAI(apiKey);
 }
 
@@ -61,7 +61,7 @@ function getFallbackAnalysis(articles: SelectedArticle[]): ComparisonAnalysisRes
 
   // Simple theme detection
   const leanings = articles.map(a => a.leaning);
-  const hasOpposing = 
+  const hasOpposing =
     (leanings.includes('left') || leanings.includes('lean-left')) &&
     (leanings.includes('right') || leanings.includes('lean-right'));
 
@@ -108,14 +108,15 @@ export async function POST(request: NextRequest) {
     // Initialize Gemini client and analyze comparison
     try {
       const genAI = getGeminiClient();
-      
+
       // Use Gemini 2.5 Flash model
-      const model = genAI.getGenerativeModel({ 
+      const model = genAI.getGenerativeModel({
         model: 'gemini-2.5-flash',
         generationConfig: {
           temperature: 0.3, // Lower temperature for more focused analysis
           topP: 0.8,
           topK: 40,
+          maxOutputTokens: 4096, // Limit output tokens for faster responses (~3K tokens for comparison analysis)
         },
       });
 
@@ -123,11 +124,13 @@ export async function POST(request: NextRequest) {
       const prompt = generateComparisonPrompt(articles as SelectedArticle[]);
 
       // Call Gemini API with timeout
+      // Note: Vercel limits: Hobby (10s), Pro (60s), Enterprise (300s)
+      // Using 55s to leave buffer for platform overhead
       const startTime = Date.now();
-      const timeoutMs = 30000; // 30 second timeout for comparison analysis
-      
+      const timeoutMs = 55000; // 55 second timeout (within Pro plan 60s limit)
+
       console.log(`Calling Gemini API for comparison analysis of ${articles.length} articles`);
-      
+
       const result = await Promise.race([
         model.generateContent({
           contents: [
@@ -137,15 +140,15 @@ export async function POST(request: NextRequest) {
             },
           ],
         }),
-        new Promise<never>((_, reject) => 
+        new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('API request timeout')), timeoutMs)
         ),
       ]);
-      
+
       const response = result.response;
       const text = response.text();
       const elapsedTime = Date.now() - startTime;
-      
+
       console.log(`Gemini comparison analysis completed in ${elapsedTime}ms`);
 
       // Clean and parse JSON response
@@ -175,7 +178,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Ensure all fields are arrays of strings
-      analysis.sharedFacts = Array.isArray(analysis.sharedFacts) 
+      analysis.sharedFacts = Array.isArray(analysis.sharedFacts)
         ? analysis.sharedFacts.filter(f => typeof f === 'string').slice(0, 5)
         : [];
       analysis.commonThemes = Array.isArray(analysis.commonThemes)
@@ -192,14 +195,14 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       // If Gemini API fails, fall back to heuristic analysis
       console.error('Gemini API error:', error);
-      
+
       // Handle specific error types
       if (error instanceof Error) {
         // Rate limiting errors
-        if (error.message.includes('quota') || 
-            error.message.includes('429') || 
-            error.message.includes('rate limit') ||
-            error.message.includes('RESOURCE_EXHAUSTED')) {
+        if (error.message.includes('quota') ||
+          error.message.includes('429') ||
+          error.message.includes('rate limit') ||
+          error.message.includes('RESOURCE_EXHAUSTED')) {
           console.warn('Rate limit reached. Using fallback analysis.');
           const fallbackAnalysis = getFallbackAnalysis(articles as SelectedArticle[]);
           return NextResponse.json(fallbackAnalysis, {
@@ -210,7 +213,7 @@ export async function POST(request: NextRequest) {
             },
           });
         }
-        
+
         // Timeout errors
         if (error.message.includes('timeout') || error.message.includes('API request timeout')) {
           console.warn('API request timeout. Using fallback analysis.');
@@ -233,7 +236,7 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('API route error:', error);
-    
+
     return NextResponse.json(
       { error: 'An unexpected error occurred while processing your request.' },
       { status: 500 }
