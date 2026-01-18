@@ -66,6 +66,12 @@ This sprint plan breaks down the development of The Perspective Engine into mana
 ## Phase 2: API Integration Setup
 **Goal:** Set up Gemini 1.5 Flash API integration infrastructure
 
+**Strategy: Hybrid Article Approach**
+We're implementing a hybrid approach that combines:
+- **Real Articles**: Use Gemini's Google Search grounding to find actual articles related to the topic
+- **Generated Articles**: Fallback to generating representative articles if real ones are unavailable
+- **Benefits**: Always has content (fallback), but uses real articles when possible for authenticity
+
 ### Task 2.1: Environment Configuration
 - [ ] Create `.env.local` file with `GEMINI_API_KEY` placeholder
 - [ ] Add `.env.local` to `.gitignore`
@@ -93,41 +99,63 @@ This sprint plan breaks down the development of The Perspective Engine into mana
 
 **Estimated time:** 45 minutes
 
-### Task 2.3: Design Gemini Prompt Template
+### Task 2.3: Design Gemini Prompt Template (Hybrid Approach)
 - [ ] Create prompt template in `lib/prompts.ts`
 - [ ] Define JSON schema for Topic response
+- [ ] Implement hybrid approach: real articles + generated fallback
 - [ ] Include instructions for:
+  - Using Gemini's Google Search grounding to find real articles first
+  - Falling back to generating representative articles if real ones unavailable
   - Generating 2-3 relevant sub-topics
-  - Finding 2-3 articles per sub-topic with diverse perspectives
-  - Classifying political leaning accurately
-  - Creating comprehensive summaries (4-5 bullet points each)
-  - Extracting key facts
-- [ ] Add examples of desired output format
-- [ ] Test prompt with manual Gemini API call
+  - Finding 3-5 articles per sub-topic with diverse perspectives
+  - Extracting real article URLs, titles, and sources when found
+  - Classifying political leaning accurately (from real source or generated content)
+  - Creating comprehensive summaries from real article content (4-5 bullet points)
+  - Extracting key facts from real articles or generating them
+- [ ] Add examples of desired output format (with URL field for real articles)
+- [ ] Configure prompt to prefer real articles but accept generated ones
 
 **Files to create:**
 - `lib/prompts.ts`
 
-**Estimated time:** 1 hour
+**Estimated time:** 1.5 hours
 
 ---
 
 ## Phase 3: AI Integration Implementation
 **Goal:** Connect Gemini API to generate topics dynamically
 
-### Task 3.1: Implement Topic Generation API
+**Implementation Note:**
+The hybrid approach (Task 3.1) will:
+1. First attempt to use Gemini's Google Search grounding to find real articles
+2. Extract article content, URLs, and metadata from search results
+3. Use Gemini to summarize and classify real articles
+4. Fall back to generating representative articles if real ones unavailable
+5. This ensures the app always works but provides real articles when possible
+
+### Task 3.1: Implement Topic Generation API (Hybrid Approach)
 - [ ] Complete `app/api/generate-topic/route.ts` with Gemini integration
-- [ ] Use Gemini 1.5 Flash model
+- [ ] Use Gemini 1.5 Flash model with Google Search grounding enabled (if available)
+- [ ] Implement hybrid article fetching:
+  - First: Attempt to use Gemini's Google Search to find real articles
+  - Fallback: Generate representative articles if real ones unavailable
+- [ ] Handle real article data:
+  - Extract URLs from Gemini search results
+  - Parse article metadata (title, source, date)
+  - Use Gemini to summarize real article content
+  - Classify political leaning from real source + content analysis
 - [ ] Implement structured output parsing (JSON mode)
-- [ ] Add error handling for API failures
+- [ ] Add logic to detect if articles are real (have URLs) vs generated
+- [ ] Add error handling for API failures (fallback to generation)
 - [ ] Add rate limiting considerations
 - [ ] Validate response matches Topic type
-- [ ] Test with sample queries
+- [ ] Test with sample queries (both real and generated articles)
 
 **Files to modify:**
 - `app/api/generate-topic/route.ts`
+- `lib/prompts.ts`
 
-**Estimated time:** 1.5 hours
+**Estimated time:** 2 hours
 
 ### Task 3.2: Create Topic Search Component
 - [ ] Create `components/header/topic-search.tsx`
@@ -211,10 +239,74 @@ This sprint plan breaks down the development of The Perspective Engine into mana
 
 ---
 
-## Phase 5: Enhanced Interactions & Polish
+## Phase 5: Perspective Analysis Feature
+**Goal:** Add detailed perspective analysis to help users understand article classification
+
+### Task 5.1: Design Perspective Analysis Data Structure
+- [ ] Define `PerspectiveAnalysis` type in `lib/types.ts`
+- [ ] Include fields for:
+  - Language patterns analysis (framing indicators, sentiment)
+  - Source classification reasoning
+  - Topic coverage emphasis points
+  - Confidence score for leaning classification
+- [ ] Create interface for analysis display
+
+**Files to modify:**
+- `lib/types.ts`
+
+**Estimated time:** 30 minutes
+
+### Task 5.2: Generate Perspective Analysis with Gemini
+- [ ] Update `lib/prompts.ts` to include perspective analysis generation
+- [ ] Add instructions for Gemini to analyze:
+  - Why the article received its political leaning classification
+  - Specific language patterns that indicate perspective
+  - Framing techniques used in the content
+  - What aspects of the issue receive emphasis
+- [ ] Include analysis in Topic API response generation
+- [ ] Test analysis generation with sample articles
+
+**Files to modify:**
+- `lib/prompts.ts`
+- `app/api/generate-topic/route.ts`
+
+**Estimated time:** 1 hour
+
+### Task 5.3: Add Perspective Analysis Section to Sidebar
+- [ ] Create "Perspective Analysis" section in `context-sidebar.tsx`
+- [ ] Display analysis breakdown:
+  - Source classification reasoning
+  - Language pattern indicators
+  - Topic coverage emphasis
+  - Confidence score
+- [ ] Add collapsible/expandable UI for detailed analysis
+- [ ] Style to match existing sidebar design
+- [ ] Test with real article analysis data
+
+**Files to modify:**
+- `components/sidebar/context-sidebar.tsx`
+- `lib/types.ts`
+
+**Estimated time:** 1 hour
+
+### Task 5.4: Enhance Analysis with Visual Indicators
+- [ ] Add visual breakdown of classification factors
+- [ ] Show confidence score with progress bar or visual indicator
+- [ ] Highlight specific phrases/examples that influenced classification
+- [ ] Add tooltips explaining classification criteria
+- [ ] Test visual presentation and readability
+
+**Files to modify:**
+- `components/sidebar/context-sidebar.tsx`
+
+**Estimated time:** 45 minutes
+
+---
+
+## Phase 6: Enhanced Interactions & Polish
 **Goal:** Refine user interactions and visual polish
 
-### Task 5.1: Improve Node Interactions
+### Task 6.1: Improve Node Interactions
 - [ ] Add double-click to center/fit view on node
 - [ ] Add keyboard shortcuts (Esc to deselect, arrow keys to navigate)
 - [ ] Improve drag experience (snap to grid option?)
@@ -228,7 +320,7 @@ This sprint plan breaks down the development of The Perspective Engine into mana
 
 **Estimated time:** 1 hour
 
-### Task 5.2: Enhance Comparison Feature
+### Task 6.2: Enhance Comparison Feature
 - [ ] Improve common ground detection algorithm
 - [ ] Add visual indicators on graph when articles are in compare mode
 - [ ] Highlight shared facts more prominently
@@ -241,7 +333,7 @@ This sprint plan breaks down the development of The Perspective Engine into mana
 
 **Estimated time:** 45 minutes
 
-### Task 5.3: Visual Polish & Animations
+### Task 6.3: Visual Polish & Animations
 - [ ] Add smooth transitions for sidebar open/close
 - [ ] Add fade-in animations for graph nodes
 - [ ] Improve color contrast for accessibility
@@ -259,10 +351,10 @@ This sprint plan breaks down the development of The Perspective Engine into mana
 
 ---
 
-## Phase 6: Testing & Optimization
+## Phase 7: Testing & Optimization
 **Goal:** Ensure reliability and performance
 
-### Task 6.1: Performance Optimization
+### Task 7.1: Performance Optimization
 - [ ] Optimize graph rendering (memoization, virtualization if needed)
 - [ ] Reduce API response time (optimize prompt, use streaming?)
 - [ ] Add response caching for repeated searches
@@ -276,7 +368,7 @@ This sprint plan breaks down the development of The Perspective Engine into mana
 
 **Estimated time:** 1 hour
 
-### Task 6.2: Error Handling & Edge Cases
+### Task 7.2: Error Handling & Edge Cases
 - [ ] Handle empty search queries
 - [ ] Handle API timeout scenarios
 - [ ] Handle malformed API responses
@@ -291,7 +383,7 @@ This sprint plan breaks down the development of The Perspective Engine into mana
 
 **Estimated time:** 45 minutes
 
-### Task 6.3: Cross-browser Testing
+### Task 7.3: Cross-browser Testing
 - [ ] Test on Chrome, Firefox, Safari, Edge
 - [ ] Test on mobile devices (iOS, Android)
 - [ ] Test graph interactions on touch devices
@@ -302,10 +394,10 @@ This sprint plan breaks down the development of The Perspective Engine into mana
 
 ---
 
-## Phase 7: Documentation & Deployment Prep
+## Phase 8: Documentation & Deployment Prep
 **Goal:** Prepare for demo and deployment
 
-### Task 7.1: Update Documentation
+### Task 8.1: Update Documentation
 - [ ] Update README.md with setup instructions
 - [ ] Document API key setup process
 - [ ] Add architecture overview
@@ -317,7 +409,7 @@ This sprint plan breaks down the development of The Perspective Engine into mana
 
 **Estimated time:** 30 minutes
 
-### Task 7.2: Deployment Configuration
+### Task 8.2: Deployment Configuration
 - [ ] Configure Vercel environment variables
 - [ ] Set up production API key in Vercel
 - [ ] Test deployment on Vercel preview
@@ -326,7 +418,7 @@ This sprint plan breaks down the development of The Perspective Engine into mana
 
 **Estimated time:** 30 minutes
 
-### Task 7.3: Final Demo Preparation
+### Task 8.3: Final Demo Preparation
 - [ ] Test all three demo topics work correctly
 - [ ] Prepare demo script/narrative
 - [ ] Record demo video (if needed)
@@ -353,16 +445,17 @@ Based on PRD Section 8, verify:
 
 ---
 
-## Estimated Total Time: ~15-18 hours
+## Estimated Total Time: ~18-21 hours
 
 ## Priority Order
 1. **Phase 1** (Cleanup) - Foundation for everything else
 2. **Phase 2** (API Setup) - Required before AI integration
 3. **Phase 3** (AI Integration) - Core functionality
 4. **Phase 4** (Skeleton Loaders) - Critical for UX
-5. **Phase 5** (Polish) - Nice to have
-6. **Phase 6** (Testing) - Important for reliability
-7. **Phase 7** (Deployment) - Final prep
+5. **Phase 5** (Perspective Analysis) - New feature to explain classifications
+6. **Phase 6** (Polish) - Nice to have
+7. **Phase 7** (Testing) - Important for reliability
+8. **Phase 8** (Deployment) - Final prep
 
 ## Notes
 - Each task should be completed and tested before moving to the next
