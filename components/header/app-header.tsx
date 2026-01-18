@@ -31,7 +31,7 @@ export function AppHeader({
           </div>
           <div className="hidden md:block">
             <h1 className="text-lg font-bold text-foreground leading-none">
-              TheBigPicture
+              The Big Picture
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
               Map complexity. Foster understanding.
