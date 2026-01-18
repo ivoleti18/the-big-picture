@@ -123,9 +123,9 @@ export async function POST(request: NextRequest) {
     try {
       const genAI = getGeminiClient();
       
-      // Use Gemini 2.5 Flash model with Google Search grounding
-      // Note: JSON mode (responseMimeType: 'application/json') is not supported with tools
-      // We'll parse JSON from text response instead
+      // Use Gemini 2.5 Flash model (without Google Search for faster responses)
+      // Note: Google Search grounding disabled to reduce latency (was causing 30-60s delays)
+      // The prompt will instruct Gemini to generate representative articles instead
       const model = genAI.getGenerativeModel({ 
         model: 'gemini-2.5-flash',
         generationConfig: {
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Generate prompt with hybrid approach instructions
+      // Generate prompt with generation-focused instructions (no search)
       const prompt = generateTopicPrompt(sanitizedQuery);
 
       // Call Gemini API with timeout
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
       const startTime = Date.now();
       const timeoutMs = 55000; // 55 second timeout (within Pro plan 60s limit)
       
-      console.log(`Calling Gemini API for query: "${sanitizedQuery}"`);
+      console.log(`Calling Gemini API for query: "${sanitizedQuery}" (without Google Search for faster response)`);
       
       const result = await Promise.race([
         model.generateContent({
@@ -155,7 +155,8 @@ export async function POST(request: NextRequest) {
               parts: [{ text: prompt }],
             },
           ],
-          tools: [{ googleSearch: {} }] as any, // Use googleSearch tool (type assertion for SDK compatibility)
+          // Google Search disabled - generates articles directly for faster responses
+          // tools: [{ googleSearch: {} }] as any,
         }),
         new Promise<never>((_, reject) => 
           setTimeout(() => reject(new Error('API request timeout')), timeoutMs)

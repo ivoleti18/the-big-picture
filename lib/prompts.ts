@@ -21,38 +21,27 @@ TASK: Generate a comprehensive knowledge map with the following structure:
    - Name should be clear and descriptive (3-5 words)
    - Include a brief description explaining what aspect this covers
 
-3. ARTICLES (2-5 articles per sub-topic) - HYBRID APPROACH:
+3. ARTICLES (2-5 articles per sub-topic):
    
-   PRIORITY 1: Use Google Search to find REAL articles first
-   - Search for actual news articles related to each sub-topic
-   - Find articles from diverse sources with different political leanings
-   - Extract: URL, actual title, real source name, publication date (if available)
-   - Use the actual article content to create summaries and extract facts
-   - Classify political leaning based on both source reputation AND content analysis
-   - Include the "url" field in the JSON when real articles are found
-   
-   PRIORITY 2: Fallback to GENERATING representative articles if real ones unavailable
-   - If real articles cannot be found for a sub-topic, generate representative articles
+   Generate representative articles for each sub-topic:
    - Create realistic article titles and source names matching political leanings
    - Generate comprehensive summaries that represent the perspective accurately
-   - Omit "url" field for generated articles (only include for real articles)
-   - Ensure generated articles still provide diverse political perspectives
+   - Omit "url" field (articles are generated, not real)
+   - Ensure diverse political perspectives across articles
 
 4. ARTICLE DETAILS:
-   For each article (real or generated), provide:
-   - Title: Actual article title (if real) OR compelling realistic headline (if generated) - 10-15 words
-   - Source: Real news outlet name (if real) OR realistic news outlet matching leaning (if generated)
+   For each article, provide:
+   - Title: Compelling realistic headline (10-15 words) matching the political leaning
+   - Source: Realistic news outlet name matching the political leaning
    - Leaning: ONE of: "left", "lean-left", "center", "lean-right", "right", "neutral"
-     * For REAL articles: Classify based on source reputation + content analysis
-     * For GENERATED articles: Use the classification that matches the source style
+     * Use the classification that matches the source style and perspective
    - Summary: 4-5 comprehensive bullet points that:
-     * For REAL articles: Summarize the actual article content with key arguments
-     * For GENERATED articles: Create representative summaries for the perspective
-     * Include specific details, data points, and evidence in both cases
+     * Create representative summaries for the perspective
+     * Include specific details, data points, and evidence
      * Are long enough to be meaningful (2-3 sentences per bullet, not fragments)
      * Avoid extreme brevity - ensure readers get the complete gist
-   - Key Facts: 3-5 concise, factual data points extracted from real articles OR generated based on the perspective
-   - URL: Include ONLY for real articles found via Google Search (omit for generated articles)
+   - Key Facts: 3-5 concise, factual data points generated based on the perspective
+   - URL: Omit this field (articles are generated, not real)
    - Perspective Analysis: Detailed breakdown explaining WHY the article received its political leaning classification:
      * Language Patterns: Identify specific framing indicators (e.g., "economic burden", "systemic inequality", "market forces"), assess overall sentiment (positive/negative/neutral/mixed), and provide examples of phrases that indicate perspective
      * Source Classification: Explain how the publication's known bias influences classification, provide historical context about editorial stance, and note reputation factors
@@ -69,14 +58,12 @@ POLITICAL LEANING CLASSIFICATION GUIDE:
 - "neutral": Academic, data-driven, non-partisan sources (e.g., Scientific American, MIT Technology Review)
 
 REQUIREMENTS:
-- HYBRID APPROACH: Always try to find real articles first, but gracefully fall back to generation if needed
 - Article diversity: Each sub-topic should have articles from different leanings (at minimum: left-leaning and right-leaning)
-- Real article preference: Prefer real articles when available, but don't fail if only some are real
 - Comprehensive summaries: 4-5 bullet points, each containing substantive information (2-3 sentences, not fragments)
-- Source authenticity: Use real source names for real articles, realistic names for generated ones
+- Source authenticity: Use realistic source names that match the political leaning
 - Data points: Include specific statistics, numbers, and concrete examples in summaries
 - Key facts: Concise but informative (numbers, percentages, specific claims)
-- URL handling: Include "url" field only for real articles; omit for generated articles
+- URL handling: Omit "url" field (all articles are generated)
 - Perspective Analysis: Provide detailed analysis for EVERY article explaining why it received its classification - analyze language patterns, source characteristics, and topic coverage emphasis
 
 OUTPUT FORMAT: Return ONLY valid JSON matching this exact structure:
@@ -96,7 +83,7 @@ OUTPUT FORMAT: Return ONLY valid JSON matching this exact structure:
           "title": "Article Title",
           "source": "News Source Name",
           "leaning": "left|lean-left|center|lean-right|right|neutral",
-          "url": "https://example.com/article", // Optional: INCLUDE ONLY for real articles, omit for generated
+          // "url": omitted - articles are generated
           "summary": [
             "First comprehensive bullet point explaining the article's perspective with details...",
             "Second bullet point with specific arguments, data, or evidence...",
@@ -136,21 +123,19 @@ OUTPUT FORMAT: Return ONLY valid JSON matching this exact structure:
 
 IMPORTANT:
 - Return ONLY the JSON object, no markdown, no code blocks, no explanations
-- HYBRID APPROACH: Mix of real and generated articles is acceptable - use real when available
-- Ensure all required fields are present (except "url" which is optional)
+- Ensure all required fields are present (omit "url" field - articles are generated)
 - Use only valid leaning values
 - Minimum 2 sub-topics, maximum 3
 - Minimum 2 articles per sub-topic, maximum 5
 - Each article summary must have 4-5 comprehensive bullet points (not fragments)
 - Generate IDs in kebab-case (lowercase, hyphens instead of spaces)
-- Include "url" field ONLY for real articles found via Google Search
+- Do NOT include "url" field (all articles are generated)
 - Perspective Analysis: Include "perspectiveAnalysis" for EVERY article with detailed breakdown of classification reasoning
 
-SEARCH STRATEGY:
-1. For each sub-topic, search for recent articles from diverse sources
-2. If real articles found: Use them with actual URLs, titles, and content
-3. If real articles unavailable: Generate representative articles matching the perspective
-4. Always ensure diversity of political leanings regardless of source (real or generated)
+GENERATION STRATEGY:
+1. For each sub-topic, generate representative articles matching different political perspectives
+2. Create realistic titles, sources, and content that accurately represent each leaning
+3. Ensure diversity of political leanings across all articles
 
 Generate the knowledge map now for: "${query}"`;
 }
