@@ -1,16 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { X, ExternalLink, Brain, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, ExternalLink, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import type { SelectedArticle, PoliticalLeaning } from '@/lib/types';
 
@@ -29,8 +23,6 @@ const leaningStyles: Record<PoliticalLeaning, { bg: string; border: string; text
 };
 
 export function ContextSidebar({ article, onClose }: ContextSidebarProps) {
-  const [showReasoning, setShowReasoning] = useState(false);
-
   if (!article) {
     return (
       <div className="h-full flex flex-col items-center justify-center p-8 text-center">
@@ -52,7 +44,7 @@ export function ContextSidebar({ article, onClose }: ContextSidebarProps) {
       {/* Header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-start justify-between gap-2 mb-3">
-          <Badge 
+          <Badge
             className={cn(
               "px-2 py-1 text-xs font-medium",
               style.bg,
@@ -73,16 +65,16 @@ export function ContextSidebar({ article, onClose }: ContextSidebarProps) {
             <span className="sr-only">Close sidebar</span>
           </Button>
         </div>
-        
+
         <h2 className="text-lg font-bold text-foreground leading-tight mb-2">
           {article.title}
         </h2>
-        
+
         <div className="flex items-center gap-2 text-sm">
           <span className="text-muted-foreground">Source:</span>
           <span className="font-medium text-foreground">{article.source}</span>
         </div>
-        
+
         <div className="flex items-center gap-2 text-sm mt-1">
           <span className="text-muted-foreground">Topic:</span>
           <span className="font-medium text-foreground">{article.subTopicName}</span>
@@ -133,62 +125,6 @@ export function ContextSidebar({ article, onClose }: ContextSidebarProps) {
               <Separator />
             </>
           )}
-
-          {/* AI Reasoning Section */}
-          <Collapsible open={showReasoning} onOpenChange={setShowReasoning}>
-            <CollapsibleTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full justify-between bg-transparent"
-              >
-                <span className="flex items-center gap-2">
-                  <Brain className="w-4 h-4" />
-                  Show AI Reasoning
-                </span>
-                {showReasoning ? (
-                  <ChevronUp className="w-4 h-4" />
-                ) : (
-                  <ChevronDown className="w-4 h-4" />
-                )}
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-3">
-              <div className="bg-muted/50 rounded-lg p-4 border border-border">
-                <p className="text-sm text-muted-foreground mb-3">
-                  <strong className="text-foreground">Bias Classification Trace:</strong>
-                </p>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-start gap-2">
-                    <span className="text-primary font-mono text-xs mt-0.5">1.</span>
-                    <p className="text-foreground/80">
-                      <strong>Source Analysis:</strong> {article.source} historically demonstrates {article.leaning.replace('-', ' ')} editorial tendencies.
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-primary font-mono text-xs mt-0.5">2.</span>
-                    <p className="text-foreground/80">
-                      <strong>Language Patterns:</strong> Analyzed headline sentiment and framing indicators.
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-primary font-mono text-xs mt-0.5">3.</span>
-                    <p className="text-foreground/80">
-                      <strong>Topic Coverage:</strong> Evaluated which aspects of the issue receive emphasis.
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-primary font-mono text-xs mt-0.5">4.</span>
-                    <p className="text-foreground/80">
-                      <strong>Confidence:</strong> 87% confidence in classification based on multiple factors.
-                    </p>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-4 italic">
-                  Powered by Arize Phoenix observability traces
-                </p>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
 
           {/* Read Original */}
           {article.url && (
