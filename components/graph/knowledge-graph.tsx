@@ -50,7 +50,7 @@ export function KnowledgeGraph({
         if (node.type === 'article') {
           const isSelected = node.id === selectedArticleId;
           const isCompareCandidate = compareMode && compareArticles.some((a) => `article-${a.id}` === node.id);
-          
+
           return {
             ...node,
             data: {
@@ -102,6 +102,8 @@ export function KnowledgeGraph({
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
+        edgesUpdatable={false}
+        edgesFocusable={false}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.3}
@@ -110,7 +112,7 @@ export function KnowledgeGraph({
         proOptions={{ hideAttribution: true }}
       >
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="var(--border)" />
-        <Controls 
+        <Controls
           showInteractive={false}
           className="!bg-card !border-border"
         />
